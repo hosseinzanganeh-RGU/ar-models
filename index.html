@@ -3,241 +3,406 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AR Teaching Viewer</title>
-
+  <title>Advanced AR Teaching Tool</title>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: #f4f6f8;
-      color: #222;
+    :root {
+      --bg: #f3f6fb;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #dbe3ee;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --danger: #dc2626;
+      --success: #15803d;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
     }
 
-    .container {
-      max-width: 1300px;
-      margin: 0 auto;
-      padding: 20px;
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
     }
+
+    .app {
+      display: grid;
+      grid-template-columns: 430px 1fr;
+      min-height: 100vh;
+      gap: 18px;
+      padding: 18px;
+    }
+
+    .panel, .viewer-wrap {
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 36px);
+    }
+
+    .section {
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section:last-child { border-bottom: 0; }
 
     h1 {
-      margin: 0 0 8px 0;
+      margin: 0 0 6px 0;
+      font-size: 1.65rem;
     }
 
-    .subtitle {
-      color: #555;
-      margin-bottom: 20px;
+    h2 {
+      margin: 0 0 12px 0;
+      font-size: 1.05rem;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 360px 1fr;
-      gap: 20px;
+    p, .small {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.93rem;
     }
 
-    .panel, .viewer-panel {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-      padding: 16px;
-    }
+    .stack { display: grid; gap: 10px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .row > * { flex: 1; }
 
     label {
       display: block;
+      margin-bottom: 5px;
+      font-size: 0.9rem;
       font-weight: bold;
-      margin-top: 14px;
-      margin-bottom: 6px;
     }
 
-    input[type="text"], input[type="file"], textarea, select {
+    input[type="text"], input[type="number"], select, textarea {
       width: 100%;
-      box-sizing: border-box;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 14px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      font-size: 0.95rem;
+      background: #fff;
     }
 
     textarea {
+      min-height: 82px;
       resize: vertical;
-      min-height: 70px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      background: #fff;
     }
 
     button {
-      margin-top: 10px;
-      margin-right: 8px;
+      border: 0;
+      border-radius: 12px;
       padding: 10px 14px;
-      border: none;
-      border-radius: 8px;
-      background: #1565c0;
-      color: white;
+      font-size: 0.95rem;
       cursor: pointer;
-      font-size: 14px;
+      background: var(--primary);
+      color: #fff;
+      transition: 0.2s ease;
     }
 
-    button:hover {
-      background: #0d4f9c;
+    button:hover { background: var(--primary-dark); }
+    button.secondary { background: #64748b; }
+    button.secondary:hover { background: #475569; }
+    button.danger { background: var(--danger); }
+    button.success { background: var(--success); }
+
+    .model-list, .action-list {
+      display: grid;
+      gap: 10px;
+      max-height: 240px;
+      overflow: auto;
+      padding-right: 4px;
     }
 
-    button.secondary {
-      background: #666;
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
     }
 
-    button.secondary:hover {
-      background: #4d4d4d;
+    .card.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
     }
 
-    .drop-zone {
-      margin-top: 10px;
-      padding: 20px;
-      border: 2px dashed #9aa7b2;
-      border-radius: 10px;
-      text-align: center;
-      background: #fafbfd;
-      color: #555;
+    .card-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      word-break: break-word;
     }
 
-    .drop-zone.dragover {
-      background: #eaf4ff;
-      border-color: #1565c0;
+    .meta {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #e8eefc;
+      color: var(--primary-dark);
+      font-size: 0.78rem;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+
+    .viewer-wrap {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: calc(100vh - 36px);
+    }
+
+    .viewer-head, .viewer-foot {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .viewer-foot {
+      border-bottom: 0;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .viewer-stage {
+      position: relative;
+      min-height: 620px;
+      background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
     }
 
     model-viewer {
       width: 100%;
-      height: 72vh;
-      background: #eef2f5;
-      border-radius: 10px;
+      height: 100%;
+      min-height: 620px;
+      background: transparent;
+      --poster-color: transparent;
     }
 
-    .info-box {
-      margin-top: 14px;
-      padding: 12px;
-      background: #f8fafc;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
+    .overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
     }
 
-    .small {
-      font-size: 13px;
-      color: #555;
-    }
-
-    .model-list {
-      margin-top: 10px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      max-height: 180px;
-      overflow-y: auto;
-      background: #fff;
-    }
-
-    .model-item {
-      padding: 10px;
-      border-bottom: 1px solid #eee;
-      cursor: pointer;
-    }
-
-    .model-item:hover {
-      background: #f3f7fb;
-    }
-
-    .model-item:last-child {
-      border-bottom: none;
-    }
-
-    #qrcode {
-      margin-top: 12px;
-      padding: 10px;
-      background: white;
-      display: inline-block;
-      border-radius: 8px;
-    }
-
-    .top-row {
+    .scene-item {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 130px;
+      height: 130px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.18);
+      border: 2px dashed rgba(37,99,235,0.35);
+      color: #0f172a;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .status {
-      font-size: 13px;
-      color: #0b6b2d;
+      justify-content: center;
+      text-align: center;
+      padding: 10px;
+      backdrop-filter: blur(4px);
+      pointer-events: auto;
+      cursor: pointer;
+      user-select: none;
+      transition: 0.25s ease;
+      font-size: 0.88rem;
       font-weight: bold;
     }
 
-    .warning {
-      color: #9a6700;
+    .scene-item.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
     }
 
-    @media (max-width: 950px) {
-      .grid {
+    .scene-item.selected {
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.18);
+      border-color: var(--primary);
+    }
+
+    .scene-item .badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(255,255,255,0.85);
+      border-radius: 999px;
+      padding: 3px 7px;
+      font-size: 0.72rem;
+      color: var(--primary-dark);
+    }
+
+    .help-box {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: #f8fbff;
+    }
+
+    .mono {
+      font-family: Consolas, monospace;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 0.8rem;
+      margin-right: 8px;
+    }
+
+    @media (max-width: 1100px) {
+      .app {
         grid-template-columns: 1fr;
       }
-
-      model-viewer {
-        height: 60vh;
+      .panel, .viewer-wrap {
+        min-height: auto;
+      }
+      model-viewer, .viewer-stage {
+        min-height: 520px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="top-row">
-      <div>
-        <h1>AR Teaching Viewer</h1>
-        <div class="subtitle">Load GLB files, preview them in 3D, use AR on mobile, and generate a QR code for students.</div>
+  <div class="app">
+    <div class="panel">
+      <div class="section stack">
+        <div>
+          <h1>Advanced AR Teaching Tool</h1>
+          <p>Upload several GLB files, assign simple tap actions, arrange the scene, and preview it with an AR-ready viewer. This first version uses a 2D scene planner plus a real-world AR viewer for one selected model at a time.</p>
+        </div>
+        <div class="help-box small">
+          <strong>How this version works</strong><br>
+          Part 1: build your scene and define interactions.<br>
+          Part 2: preview the currently selected model in the viewer and launch AR on mobile.<br>
+          For mobile AR, this file should be hosted online over HTTPS.
+        </div>
       </div>
-      <div class="status" id="statusText">Ready</div>
+
+      <div class="section stack">
+        <h2>1. Upload models</h2>
+        <input type="file" id="fileInput" accept=".glb" multiple />
+        <div class="row">
+          <button id="clearModelsBtn" class="secondary">Clear models</button>
+          <button id="loadDemoBtn">Load demo placeholders</button>
+        </div>
+        <div id="modelList" class="model-list"></div>
+      </div>
+
+      <div class="section stack">
+        <h2>2. Scene item settings</h2>
+        <div class="small">Select a model card or scene item first.</div>
+        <div>
+          <label for="itemLabel">Display label</label>
+          <input type="text" id="itemLabel" placeholder="Model label in scene" />
+        </div>
+        <div class="row">
+          <div>
+            <label for="posX">Scene X (%)</label>
+            <input type="number" id="posX" min="5" max="95" step="1" />
+          </div>
+          <div>
+            <label for="posY">Scene Y (%)</label>
+            <input type="number" id="posY" min="5" max="95" step="1" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="size">Size (px)</label>
+            <input type="number" id="size" min="60" max="260" step="5" />
+          </div>
+          <div>
+            <label for="arModel">AR preview model</label>
+            <select id="arModel"></select>
+          </div>
+        </div>
+        <div class="row">
+          <button id="updateItemBtn">Update selected item</button>
+          <button id="addToSceneBtn" class="success">Add selected model to scene</button>
+        </div>
+      </div>
+
+      <div class="section stack">
+        <h2>3. Tap action planner</h2>
+        <div>
+          <label for="actionType">Action type</label>
+          <select id="actionType">
+            <option value="move">Move to new location</option>
+            <option value="hide">Hide model</option>
+            <option value="show">Show model</option>
+            <option value="toggle">Toggle show/hide</option>
+          </select>
+        </div>
+        <div class="row" id="targetPositionRow">
+          <div>
+            <label for="targetX">Target X (%)</label>
+            <input type="number" id="targetX" min="5" max="95" step="1" value="75" />
+          </div>
+          <div>
+            <label for="targetY">Target Y (%)</label>
+            <input type="number" id="targetY" min="5" max="95" step="1" value="30" />
+          </div>
+        </div>
+        <div>
+          <label for="actionNote">Action note</label>
+          <textarea id="actionNote" placeholder="Optional teaching note or reminder"></textarea>
+        </div>
+        <div class="row">
+          <button id="assignActionBtn">Assign action to selected item</button>
+          <button id="clearActionBtn" class="secondary">Clear action</button>
+        </div>
+        <div id="actionSummary" class="action-list"></div>
+      </div>
+
+      <div class="section stack">
+        <h2>4. Export scene plan</h2>
+        <button id="exportBtn">Export scene JSON</button>
+        <textarea id="exportBox" placeholder="Exported scene data will appear here"></textarea>
+      </div>
     </div>
 
-    <div class="grid">
-      <div class="panel">
-        <label for="modelTitle">Model title</label>
-        <input type="text" id="modelTitle" value="AR Teaching Model" />
-
-        <label for="modelDesc">Description</label>
-        <textarea id="modelDesc">Interactive AR model for teaching.</textarea>
-
-        <label for="fileInput">Load local GLB file</label>
-        <input type="file" id="fileInput" accept=".glb" />
-
-        <div class="drop-zone" id="dropZone">
-          Drag and drop a .glb file here
-        </div>
-
-        <label for="urlInput">Load from public URL or OneDrive share link</label>
-        <input type="text" id="urlInput" placeholder="Paste public GLB URL or OneDrive share link here" />
-        <button id="loadUrlBtn">Load URL</button>
-
-        <div class="info-box small">
-          For OneDrive, the file must be shared publicly. In many cases, replacing the sharing link with a direct downloadable link is needed. If the normal share link does not work, use the direct file link.
-        </div>
-
-        <label>Loaded models for quick switching</label>
-        <div class="model-list" id="modelList"></div>
-
-        <label for="shareUrl">Share page URL for students</label>
-        <input type="text" id="shareUrl" placeholder="Paste your hosted page URL here for QR code generation" />
-
-        <button id="makeQrBtn">Generate QR code</button>
-        <button id="clearQrBtn" class="secondary">Clear QR code</button>
-
-        <div id="qrcode"></div>
-
-        <div class="info-box small">
-          To use QR codes properly, this HTML file should be hosted online, for example on OneDrive/SharePoint, GitHub Pages, or your university web space.
+    <div class="viewer-wrap">
+      <div class="viewer-head stack">
+        <div>
+          <h2 style="margin-bottom:6px;">Scene planner + AR preview</h2>
+          <div class="small">
+            <span class="pill">Desktop: arrange and test actions</span>
+            <span class="pill">Mobile: open via HTTPS and tap AR</span>
+          </div>
         </div>
       </div>
 
-      <div class="viewer-panel">
+      <div class="viewer-stage" id="viewerStage">
         <model-viewer
           id="viewer"
           src=""
-          alt="3D model"
+          alt="AR preview model"
           ar
           ar-modes="webxr scene-viewer quick-look"
           camera-controls
@@ -245,185 +410,432 @@
           shadow-intensity="1"
           exposure="1">
         </model-viewer>
+        <div class="overlay" id="overlay"></div>
+      </div>
 
-        <div class="info-box">
-          <strong id="displayTitle">AR Teaching Model</strong>
-          <div id="displayDesc" class="small">Interactive AR model for teaching.</div>
-          <div class="small" style="margin-top:8px;">
-            On a supported mobile phone, tap the AR button inside the viewer.
-          </div>
+      <div class="viewer-foot">
+        <div class="stack" style="gap:6px;">
+          <div><strong id="selectedTitle">No item selected</strong></div>
+          <div class="small" id="selectedMeta">Select or add a model to begin.</div>
+        </div>
+        <div class="row" style="flex:0 0 auto;">
+          <button id="resetSceneBtn" class="secondary">Reset scene state</button>
+          <button id="launchHintBtn">How to use AR</button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    const viewer = document.getElementById("viewer");
-    const fileInput = document.getElementById("fileInput");
-    const dropZone = document.getElementById("dropZone");
-    const urlInput = document.getElementById("urlInput");
-    const loadUrlBtn = document.getElementById("loadUrlBtn");
-    const modelTitle = document.getElementById("modelTitle");
-    const modelDesc = document.getElementById("modelDesc");
-    const displayTitle = document.getElementById("displayTitle");
-    const displayDesc = document.getElementById("displayDesc");
-    const modelList = document.getElementById("modelList");
-    const shareUrl = document.getElementById("shareUrl");
-    const makeQrBtn = document.getElementById("makeQrBtn");
-    const clearQrBtn = document.getElementById("clearQrBtn");
-    const qrcodeDiv = document.getElementById("qrcode");
-    const statusText = document.getElementById("statusText");
+    const fileInput = document.getElementById('fileInput');
+    const clearModelsBtn = document.getElementById('clearModelsBtn');
+    const loadDemoBtn = document.getElementById('loadDemoBtn');
+    const modelList = document.getElementById('modelList');
+    const arModel = document.getElementById('arModel');
+    const overlay = document.getElementById('overlay');
+    const viewer = document.getElementById('viewer');
+    const viewerStage = document.getElementById('viewerStage');
+    const selectedTitle = document.getElementById('selectedTitle');
+    const selectedMeta = document.getElementById('selectedMeta');
 
-    let loadedModels = [];
-    let currentObjectUrl = null;
-    let qrInstance = null;
+    const itemLabel = document.getElementById('itemLabel');
+    const posX = document.getElementById('posX');
+    const posY = document.getElementById('posY');
+    const sizeInput = document.getElementById('size');
+    const addToSceneBtn = document.getElementById('addToSceneBtn');
+    const updateItemBtn = document.getElementById('updateItemBtn');
 
-    function setStatus(text, isWarning = false) {
-      statusText.textContent = text;
-      statusText.className = isWarning ? "status warning" : "status";
+    const actionType = document.getElementById('actionType');
+    const targetX = document.getElementById('targetX');
+    const targetY = document.getElementById('targetY');
+    const actionNote = document.getElementById('actionNote');
+    const assignActionBtn = document.getElementById('assignActionBtn');
+    const clearActionBtn = document.getElementById('clearActionBtn');
+    const actionSummary = document.getElementById('actionSummary');
+    const targetPositionRow = document.getElementById('targetPositionRow');
+
+    const exportBtn = document.getElementById('exportBtn');
+    const exportBox = document.getElementById('exportBox');
+    const resetSceneBtn = document.getElementById('resetSceneBtn');
+    const launchHintBtn = document.getElementById('launchHintBtn');
+
+    const models = [];
+    const sceneItems = [];
+    let selectedModelId = null;
+    let selectedSceneItemId = null;
+
+    function makeId(prefix = 'id') {
+      return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
     }
 
-    function updateTextInfo() {
-      displayTitle.textContent = modelTitle.value || "AR Teaching Model";
-      displayDesc.textContent = modelDesc.value || "";
+    function getSelectedModel() {
+      return models.find(m => m.id === selectedModelId) || null;
     }
 
-    modelTitle.addEventListener("input", updateTextInfo);
-    modelDesc.addEventListener("input", updateTextInfo);
-
-    function isGLB(nameOrUrl) {
-      return nameOrUrl.toLowerCase().includes(".glb");
+    function getSelectedSceneItem() {
+      return sceneItems.find(i => i.id === selectedSceneItemId) || null;
     }
 
-    function loadModel(src, name) {
-      if (currentObjectUrl && currentObjectUrl.startsWith("blob:")) {
-        URL.revokeObjectURL(currentObjectUrl);
-      }
+    function refreshModelDropdown() {
+      arModel.innerHTML = '';
+      const empty = document.createElement('option');
+      empty.value = '';
+      empty.textContent = models.length ? 'Use original model file' : 'No models uploaded';
+      arModel.appendChild(empty);
 
-      viewer.src = src;
-      currentObjectUrl = src.startsWith("blob:") ? src : null;
-
-      setStatus("Loaded: " + name);
-      addModelToList(name, src);
+      models.forEach(model => {
+        const opt = document.createElement('option');
+        opt.value = model.id;
+        opt.textContent = model.name;
+        arModel.appendChild(opt);
+      });
     }
 
-    function addModelToList(name, src) {
-      const existing = loadedModels.find(item => item.name === name && item.src === src);
-      if (existing) return;
+    function renderModels() {
+      modelList.innerHTML = '';
+      models.forEach(model => {
+        const card = document.createElement('div');
+        card.className = 'card' + (model.id === selectedModelId ? ' active' : '');
 
-      loadedModels.push({ name, src });
+        const title = document.createElement('div');
+        title.className = 'card-title';
+        title.textContent = model.name;
 
-      const item = document.createElement("div");
-      item.className = "model-item";
-      item.textContent = name;
-      item.addEventListener("click", function() {
-        viewer.src = src;
-        setStatus("Switched to: " + name);
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = `${Math.round(model.size / 1024)} KB`;
+
+        const tags = document.createElement('div');
+        tags.innerHTML = '<span class="tag">GLB</span><span class="tag">Tap to select</span>';
+
+        const row = document.createElement('div');
+        row.className = 'row';
+
+        const selectBtn = document.createElement('button');
+        selectBtn.textContent = 'Select';
+        selectBtn.onclick = () => {
+          selectedModelId = model.id;
+          renderModels();
+          hydrateModelControls();
+        };
+
+        const previewBtn = document.createElement('button');
+        previewBtn.textContent = 'Preview';
+        previewBtn.className = 'secondary';
+        previewBtn.onclick = () => {
+          viewer.src = model.url;
+          selectedTitle.textContent = `Previewing: ${model.name}`;
+          selectedMeta.textContent = 'This is the model currently loaded in the AR viewer.';
+        };
+
+        row.appendChild(selectBtn);
+        row.appendChild(previewBtn);
+
+        card.appendChild(title);
+        card.appendChild(meta);
+        card.appendChild(tags);
+        card.appendChild(row);
+        modelList.appendChild(card);
       });
 
-      modelList.appendChild(item);
+      refreshModelDropdown();
     }
 
-    function handleFile(file) {
-      if (!file) return;
+    function renderScene() {
+      overlay.innerHTML = '';
+      sceneItems.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'scene-item' + (item.hidden ? ' hidden' : '') + (item.id === selectedSceneItemId ? ' selected' : '');
+        el.style.left = item.x + '%';
+        el.style.top = item.y + '%';
+        el.style.width = item.size + 'px';
+        el.style.height = item.size + 'px';
+        el.dataset.id = item.id;
+        el.innerHTML = `<span>${item.label}</span><span class="badge">tap</span>`;
 
-      if (!file.name.toLowerCase().endsWith(".glb")) {
-        alert("Please select a .glb file");
-        setStatus("Selected file is not a GLB file", true);
-        return;
-      }
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectedSceneItemId = item.id;
+          hydrateSceneControls();
+          runAction(item);
+          renderScene();
+          renderActions();
+        });
 
-      const url = URL.createObjectURL(file);
-      loadModel(url, file.name);
-    }
-
-    fileInput.addEventListener("change", function() {
-      const file = fileInput.files[0];
-      handleFile(file);
-    });
-
-    dropZone.addEventListener("dragover", function(e) {
-      e.preventDefault();
-      dropZone.classList.add("dragover");
-    });
-
-    dropZone.addEventListener("dragleave", function() {
-      dropZone.classList.remove("dragover");
-    });
-
-    dropZone.addEventListener("drop", function(e) {
-      e.preventDefault();
-      dropZone.classList.remove("dragover");
-
-      const file = e.dataTransfer.files[0];
-      handleFile(file);
-    });
-
-    function convertOneDriveLink(url) {
-      let newUrl = url.trim();
-
-      if (newUrl.includes("download=0")) {
-        newUrl = newUrl.replace("download=0", "download=1");
-      } else if (newUrl.includes("?")) {
-        newUrl = newUrl + "&download=1";
-      } else {
-        newUrl = newUrl + "?download=1";
-      }
-
-      return newUrl;
-    }
-
-    loadUrlBtn.addEventListener("click", function() {
-      let url = urlInput.value.trim();
-
-      if (!url) {
-        alert("Please paste a URL first.");
-        return;
-      }
-
-      let finalUrl = url;
-
-      if (url.toLowerCase().includes("onedrive") || url.toLowerCase().includes("1drv.ms")) {
-        finalUrl = convertOneDriveLink(url);
-      }
-
-      const guessedName = finalUrl.split("/").pop().split("?")[0] || "Online Model";
-
-      if (!isGLB(finalUrl) && !(url.toLowerCase().includes("onedrive") || url.toLowerCase().includes("1drv.ms"))) {
-        const proceed = confirm("This link does not clearly end with .glb. Do you still want to try loading it?");
-        if (!proceed) return;
-      }
-
-      viewer.src = finalUrl;
-      addModelToList(guessedName, finalUrl);
-      setStatus("Loaded from URL: " + guessedName);
-    });
-
-    makeQrBtn.addEventListener("click", function() {
-      const url = shareUrl.value.trim();
-
-      if (!url) {
-        alert("Please paste the hosted page URL first.");
-        return;
-      }
-
-      qrcodeDiv.innerHTML = "";
-
-      qrInstance = new QRCode(qrcodeDiv, {
-        text: url,
-        width: 180,
-        height: 180
+        overlay.appendChild(el);
       });
+      updateSelectionInfo();
+    }
 
-      setStatus("QR code generated");
+    function renderActions() {
+      actionSummary.innerHTML = '';
+      if (!sceneItems.length) {
+        const empty = document.createElement('div');
+        empty.className = 'card';
+        empty.innerHTML = '<div class="meta">No scene items yet.</div>';
+        actionSummary.appendChild(empty);
+        return;
+      }
+
+      sceneItems.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card' + (item.id === selectedSceneItemId ? ' active' : '');
+        let desc = 'No action assigned';
+        if (item.action) {
+          if (item.action.type === 'move') {
+            desc = `Tap moves to (${item.action.targetX}%, ${item.action.targetY}%)`;
+          } else if (item.action.type === 'hide') {
+            desc = 'Tap hides this item';
+          } else if (item.action.type === 'show') {
+            desc = 'Tap shows this item';
+          } else if (item.action.type === 'toggle') {
+            desc = 'Tap toggles show/hide';
+          }
+        }
+        card.innerHTML = `
+          <div class="card-title">${item.label}</div>
+          <div class="meta">${desc}</div>
+          <div class="small">${item.action?.note || 'No note'}</div>
+        `;
+        actionSummary.appendChild(card);
+      });
+    }
+
+    function updateSelectionInfo() {
+      const item = getSelectedSceneItem();
+      if (!item) {
+        selectedTitle.textContent = 'No item selected';
+        selectedMeta.textContent = 'Select or add a model to begin.';
+        return;
+      }
+      const model = models.find(m => m.id === item.modelId);
+      const actionText = item.action ? item.action.type : 'none';
+      selectedTitle.textContent = item.label;
+      selectedMeta.textContent = `Model: ${model ? model.name : 'Unknown'} | Position: (${item.x}%, ${item.y}%) | Action: ${actionText}`;
+
+      const previewModel = models.find(m => m.id === (item.arModelId || item.modelId));
+      if (previewModel) viewer.src = previewModel.url;
+    }
+
+    function hydrateModelControls() {
+      const model = getSelectedModel();
+      if (!model) return;
+      itemLabel.value = model.name.replace(/\.glb$/i, '');
+    }
+
+    function hydrateSceneControls() {
+      const item = getSelectedSceneItem();
+      if (!item) return;
+      itemLabel.value = item.label;
+      posX.value = item.x;
+      posY.value = item.y;
+      sizeInput.value = item.size;
+      arModel.value = item.arModelId || '';
+      actionType.value = item.action?.type || 'move';
+      targetX.value = item.action?.targetX ?? 75;
+      targetY.value = item.action?.targetY ?? 30;
+      actionNote.value = item.action?.note || '';
+      toggleTargetVisibility();
+      updateSelectionInfo();
+    }
+
+    function toggleTargetVisibility() {
+      const type = actionType.value;
+      targetPositionRow.style.display = type === 'move' ? 'flex' : 'none';
+    }
+
+    function addModelFromFile(file) {
+      if (!file.name.toLowerCase().endsWith('.glb')) return;
+      const model = {
+        id: makeId('model'),
+        name: file.name,
+        size: file.size,
+        url: URL.createObjectURL(file)
+      };
+      models.push(model);
+      if (!selectedModelId) selectedModelId = model.id;
+      renderModels();
+      hydrateModelControls();
+      if (!viewer.src) viewer.src = model.url;
+    }
+
+    function addSceneItemFromSelectedModel() {
+      const model = getSelectedModel();
+      if (!model) {
+        alert('Please select a model first.');
+        return;
+      }
+      const item = {
+        id: makeId('scene'),
+        modelId: model.id,
+        arModelId: arModel.value || '',
+        label: itemLabel.value.trim() || model.name,
+        x: Number(posX.value) || 28,
+        y: Number(posY.value) || 55,
+        size: Number(sizeInput.value) || 130,
+        hidden: false,
+        original: {
+          x: Number(posX.value) || 28,
+          y: Number(posY.value) || 55,
+          hidden: false
+        },
+        action: null
+      };
+      sceneItems.push(item);
+      selectedSceneItemId = item.id;
+      renderScene();
+      renderActions();
+      hydrateSceneControls();
+    }
+
+    function updateSelectedItem() {
+      const item = getSelectedSceneItem();
+      if (!item) {
+        alert('Please select a scene item first.');
+        return;
+      }
+      item.label = itemLabel.value.trim() || item.label;
+      item.x = clamp(Number(posX.value) || item.x, 5, 95);
+      item.y = clamp(Number(posY.value) || item.y, 5, 95);
+      item.size = clamp(Number(sizeInput.value) || item.size, 60, 260);
+      item.arModelId = arModel.value || '';
+      item.original.x = item.x;
+      item.original.y = item.y;
+      renderScene();
+      renderActions();
+    }
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function assignAction() {
+      const item = getSelectedSceneItem();
+      if (!item) {
+        alert('Please select a scene item first.');
+        return;
+      }
+      const type = actionType.value;
+      item.action = {
+        type,
+        targetX: clamp(Number(targetX.value) || 75, 5, 95),
+        targetY: clamp(Number(targetY.value) || 30, 5, 95),
+        note: actionNote.value.trim()
+      };
+      renderActions();
+      updateSelectionInfo();
+    }
+
+    function clearAction() {
+      const item = getSelectedSceneItem();
+      if (!item) return;
+      item.action = null;
+      renderActions();
+      updateSelectionInfo();
+    }
+
+    function runAction(item) {
+      if (!item.action) return;
+      if (item.action.type === 'move') {
+        item.x = item.action.targetX;
+        item.y = item.action.targetY;
+      } else if (item.action.type === 'hide') {
+        item.hidden = true;
+      } else if (item.action.type === 'show') {
+        item.hidden = false;
+      } else if (item.action.type === 'toggle') {
+        item.hidden = !item.hidden;
+      }
+    }
+
+    function resetSceneState() {
+      sceneItems.forEach(item => {
+        item.x = item.original.x;
+        item.y = item.original.y;
+        item.hidden = item.original.hidden;
+      });
+      renderScene();
+      renderActions();
+    }
+
+    function exportScene() {
+      const payload = {
+        models: models.map(m => ({ id: m.id, name: m.name, size: m.size })),
+        sceneItems: sceneItems.map(item => ({
+          id: item.id,
+          modelId: item.modelId,
+          arModelId: item.arModelId,
+          label: item.label,
+          x: item.x,
+          y: item.y,
+          size: item.size,
+          hidden: item.hidden,
+          action: item.action
+        }))
+      };
+      exportBox.value = JSON.stringify(payload, null, 2);
+    }
+
+    fileInput.addEventListener('change', (e) => {
+      Array.from(e.target.files).forEach(addModelFromFile);
     });
 
-    clearQrBtn.addEventListener("click", function() {
-      qrcodeDiv.innerHTML = "";
-      setStatus("QR code cleared");
+    clearModelsBtn.addEventListener('click', () => {
+      models.splice(0, models.length).forEach?.(() => {});
+      while (models.length) models.pop();
+      while (sceneItems.length) sceneItems.pop();
+      selectedModelId = null;
+      selectedSceneItemId = null;
+      modelList.innerHTML = '';
+      overlay.innerHTML = '';
+      actionSummary.innerHTML = '';
+      viewer.src = '';
+      refreshModelDropdown();
+      updateSelectionInfo();
+      exportBox.value = '';
     });
 
-    updateTextInfo();
+    loadDemoBtn.addEventListener('click', () => {
+      if (models.length) return;
+      const demo = [
+        { name: 'gearbox.glb', size: 180000 },
+        { name: 'shaft.glb', size: 120000 },
+        { name: 'bearing.glb', size: 95000 }
+      ];
+      demo.forEach(d => {
+        models.push({ id: makeId('model'), name: d.name, size: d.size, url: '' });
+      });
+      selectedModelId = models[0].id;
+      renderModels();
+      hydrateModelControls();
+      alert('Demo placeholders added. Upload real GLB files for full preview and AR.');
+    });
+
+    addToSceneBtn.addEventListener('click', addSceneItemFromSelectedModel);
+    updateItemBtn.addEventListener('click', updateSelectedItem);
+    assignActionBtn.addEventListener('click', assignAction);
+    clearActionBtn.addEventListener('click', clearAction);
+    exportBtn.addEventListener('click', exportScene);
+    resetSceneBtn.addEventListener('click', resetSceneState);
+    actionType.addEventListener('change', toggleTargetVisibility);
+    launchHintBtn.addEventListener('click', () => {
+      alert('For real-world AR, host this HTML file online using HTTPS, open it on a mobile device, and tap the AR button in the viewer. This first version previews the currently selected model in AR while the left panel manages a multi-model scene plan.');
+    });
+
+    viewerStage.addEventListener('click', (e) => {
+      if (e.target === viewerStage || e.target === overlay) {
+        selectedSceneItemId = null;
+        renderScene();
+      }
+    });
+
+    posX.value = 28;
+    posY.value = 55;
+    sizeInput.value = 130;
+    toggleTargetVisibility();
+    renderActions();
+    refreshModelDropdown();
+    updateSelectionInfo();
   </script>
 </body>
 </html>
