@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Advanced AR Teaching Tool 3D Scene</title>
+  <title>Advanced AR Teaching Tool 3D Scene with Anchored AR</title>
   <style>
     :root {
       --bg: #f4f7fb;
@@ -268,12 +268,11 @@
       <div class="section stack">
         <div>
           <h1>Advanced AR Teaching Tool</h1>
-          <p>This version creates one true 3D scene. You upload several GLB files, insert them into a shared 3D space, set their x, y, z positions, add actions, and then preview the same scene. On supported mobile devices, the AR mode shows that scene in the real world.</p>
+          <p>This version creates one true 3D scene. You upload several GLB files, insert them into a shared 3D space, set their x, y, z positions, add actions, and then preview the same scene. On supported mobile devices, the AR mode lets you place the whole scene onto a detected floor or table and supports tap actions directly inside AR mode.</p>
         </div>
         <div class="help-box small">
           <strong>Important note</strong><br>
-          Real-world AR preview uses WebXR. It works best on Android Chrome and other WebXR-supported browsers. iPhone Safari usually does not support this full multi-object WebXR workflow. For mobile AR, this HTML file must be hosted over HTTPS such as GitHub Pages.
-        </div>
+          Real-world AR preview uses WebXR hit testing to place the whole scene on a detected surface such as a floor or table. It works best on Android Chrome and other WebXR-supported browsers. iPhone Safari usually does not support this full multi-object WebXR workflow. For mobile AR, this HTML file must be hosted over HTTPS such as GitHub Pages.</div>
       </div>
 
       <div class="section stack">
@@ -375,6 +374,7 @@
             <span class="pill">Shift + drag: pan</span>
             <span class="pill">Wheel: zoom</span>
             <span class="pill">Click object: select or test action</span>
+            <span class="pill">AR: detect surface, then place scene</span>
           </div>
         </div>
       </div>
@@ -386,9 +386,14 @@
           <div class="status" id="selectedMeta">Upload models and add them into the 3D scene.</div>
           <div id="arButtonContainer"></div>
           <div class="status" id="arNote">AR button appears only when supported by the device/browser.</div>
+          <div class="status" id="placementNote">In AR: move your device slowly to detect a floor or table, then tap the placement ring to anchor the whole scene.</div>
           <div class="row" style="margin-top:10px;">
             <button id="resetSceneBtn" class="secondary">Reset scene</button>
             <button id="previewActionsBtn">Preview actions</button>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button id="recenterSceneBtn" class="secondary">Recenter scene</button>
+            <button id="toggleTapModeBtn" class="secondary">Tap actions: Off</button>
           </div>
         </div>
       </div>
@@ -441,8 +446,11 @@
     const selectedMeta = document.getElementById('selectedMeta');
     const arButtonContainer = document.getElementById('arButtonContainer');
     const arNote = document.getElementById('arNote');
+    const placementNote = document.getElementById('placementNote');
     const resetSceneBtn = document.getElementById('resetSceneBtn');
     const previewActionsBtn = document.getElementById('previewActionsBtn');
+    const recenterSceneBtn = document.getElementById('recenterSceneBtn');
+    const toggleTapModeBtn = document.getElementById('toggleTapModeBtn');
 
     const models = [];
     const sceneItems = [];
@@ -451,6 +459,8 @@
     let actionsEnabled = false;
 
     const scene = new THREE.Scene();
+    const sceneRoot = new THREE.Group();
+    scene.add(sceneRoot);
     scene.background = new THREE.Color(0xeef4fb);
 
     const camera = new THREE.PerspectiveCamera(55, 1, 0.01, 100);
@@ -474,7 +484,7 @@
     scene.add(dir);
 
     const grid = new THREE.GridHelper(10, 20, 0x94a3b8, 0xcbd5e1);
-    scene.add(grid);
+    sceneRoot.add(grid);
 
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(10, 10),
@@ -482,11 +492,26 @@
     );
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
-    scene.add(ground);
+    sceneRoot.add(ground);
 
     const loader = new GLTFLoader();
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
+    const tempMatrix = new THREE.Matrix4();
+    let xrHitTestSource = null;
+    let xrReferenceSpace = null;
+    let xrViewerSpace = null;
+    let scenePlacedInAR = false;
+    let tapActionsEnabledInAR = false;
+    let pendingTouch = null;
+    let arPlacementMode = false;
+
+    const placementRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.12, 0.18, 32).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.85 })
+    );
+    placementRing.visible = false;
+    scene.add(placementRing);
 
     function makeId(prefix) {
       return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
@@ -684,7 +709,7 @@
       group.scale.setScalar(Math.max(Number(scaleVal.value) || 1, 0.1));
       group.userData.clickable = true;
 
-      scene.add(group);
+      sceneRoot.add(group);
 
       const item = {
         id: makeId('scene'),
@@ -781,7 +806,20 @@
         item.hidden = item.initial.hidden;
         item.group.visible = !item.hidden;
       });
+      if (!renderer.xr.isPresenting) {
+        sceneRoot.position.set(0, 0, 0);
+        sceneRoot.rotation.set(0, 0, 0);
+        scenePlacedInAR = false;
+      }
       updateSelectionInfo();
+      highlightSelection();
+    }
+
+    function recenterSceneRoot() {
+      sceneRoot.position.set(0, 0, 0);
+      sceneRoot.rotation.set(0, 0, 0);
+      scenePlacedInAR = false;
+      placementRing.visible = false;
     }
 
     function exportScene() {
@@ -805,24 +843,35 @@
       exportBox.value = JSON.stringify(payload, null, 2);
     }
 
-    function handlePointer(event) {
+    function performRaycastSelection(clientX, clientY, useScreenCenter = false) {
       const rect = renderer.domElement.getBoundingClientRect();
-      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      if (useScreenCenter) {
+        pointer.x = 0;
+        pointer.y = 0;
+      } else {
+        pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      }
       raycaster.setFromCamera(pointer, camera);
 
-      const roots = sceneItems.map(item => item.group);
+      const roots = sceneItems.filter(item => item.group.visible).map(item => item.group);
       const intersects = raycaster.intersectObjects(roots, true);
-      if (!intersects.length) return;
+      if (!intersects.length) return null;
 
       let object = intersects[0].object;
       while (object && !object.userData.sceneItemId && object.parent) object = object.parent;
-      if (!object || !object.userData.sceneItemId) return;
+      if (!object || !object.userData.sceneItemId) return null;
 
       selectedSceneItemId = object.userData.sceneItemId;
       const item = getSelectedItem();
-      if (!item) return;
+      if (!item) return null;
       hydrateControlsFromItem();
+      return item;
+    }
+
+    function handlePointer(event) {
+      const item = performRaycastSelection(event.clientX, event.clientY, false);
+      if (!item) return;
       if (actionsEnabled) runAction(item);
     }
 
@@ -846,7 +895,7 @@
     });
 
     clearAllBtn.addEventListener('click', () => {
-      sceneItems.forEach(item => scene.remove(item.group));
+      sceneItems.forEach(item => sceneRoot.remove(item.group));
       models.forEach(m => {
         if (m.url && m.url.startsWith('blob:')) URL.revokeObjectURL(m.url);
       });
@@ -867,13 +916,32 @@
     assignActionBtn.addEventListener('click', assignAction);
     clearActionBtn.addEventListener('click', clearAction);
     resetSceneBtn.addEventListener('click', resetScene);
+    recenterSceneBtn.addEventListener('click', recenterSceneRoot);
     previewActionsBtn.addEventListener('click', () => {
       actionsEnabled = !actionsEnabled;
       previewActionsBtn.textContent = actionsEnabled ? 'Stop preview' : 'Preview actions';
       previewActionsBtn.classList.toggle('secondary', !actionsEnabled);
     });
+    toggleTapModeBtn.addEventListener('click', () => {
+      tapActionsEnabledInAR = !tapActionsEnabledInAR;
+      toggleTapModeBtn.textContent = `Tap actions: ${tapActionsEnabledInAR ? 'On' : 'Off'}`;
+    });
     actionType.addEventListener('change', toggleTargetVisibility);
     renderer.domElement.addEventListener('pointerdown', handlePointer);
+    renderer.domElement.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        pendingTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY, time: performance.now() };
+      }
+    }, { passive: true });
+    renderer.domElement.addEventListener('touchend', () => {
+      if (!pendingTouch) return;
+      const dt = performance.now() - pendingTouch.time;
+      if (dt < 350 && !renderer.xr.isPresenting) {
+        const item = performRaycastSelection(pendingTouch.x, pendingTouch.y, false);
+        if (item && actionsEnabled) runAction(item);
+      }
+      pendingTouch = null;
+    }, { passive: true });
     window.addEventListener('resize', onResize);
 
     toggleTargetVisibility();
@@ -882,16 +950,82 @@
     updateSelectionInfo();
     onResize();
 
+    renderer.xr.addEventListener('sessionstart', async () => {
+      const session = renderer.xr.getSession();
+      arPlacementMode = true;
+      scenePlacedInAR = false;
+      placementRing.visible = false;
+      placementNote.textContent = 'Move your device until the placement ring appears, then tap the ring to anchor the scene.';
+      try {
+        xrReferenceSpace = await session.requestReferenceSpace('local');
+        xrViewerSpace = await session.requestReferenceSpace('viewer');
+        xrHitTestSource = await session.requestHitTestSource({ space: xrViewerSpace });
+      } catch (err) {
+        console.error(err);
+        placementNote.textContent = 'Hit testing could not be started on this device/browser.';
+      }
+    });
+
+    renderer.xr.addEventListener('sessionend', () => {
+      if (xrHitTestSource) {
+        xrHitTestSource.cancel();
+        xrHitTestSource = null;
+      }
+      xrReferenceSpace = null;
+      xrViewerSpace = null;
+      placementRing.visible = false;
+      arPlacementMode = false;
+      scenePlacedInAR = false;
+      recenterSceneRoot();
+      placementNote.textContent = 'In AR: move your device slowly to detect a floor or table, then tap the placement ring to anchor the whole scene.';
+    });
+
+    renderer.domElement.addEventListener('click', () => {
+      if (!renderer.xr.isPresenting) return;
+      if (arPlacementMode && placementRing.visible && !scenePlacedInAR) {
+        sceneRoot.position.copy(placementRing.position);
+        scenePlacedInAR = true;
+        arPlacementMode = false;
+        placementRing.visible = false;
+        placementNote.textContent = 'Scene anchored. Tap objects to select them. Turn tap actions on to trigger actions in AR.';
+        return;
+      }
+      if (scenePlacedInAR && tapActionsEnabledInAR) {
+        const item = performRaycastSelection(0, 0, true);
+        if (item) runAction(item);
+      }
+    });
+
     try {
-      const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
+      const arButton = ARButton.createButton(renderer, {
+        requiredFeatures: ['hit-test'],
+        optionalFeatures: ['dom-overlay'],
+        domOverlay: { root: document.body }
+      });
       arButtonContainer.appendChild(arButton);
-      arNote.textContent = 'If supported, tap Start AR to place and view the 3D scene in the real world.';
+      arNote.textContent = 'If supported, tap Start AR to detect a surface and place the whole scene in the real world.';
     } catch (err) {
       arNote.textContent = 'AR preview is not available in this browser. Host the file on HTTPS and try a WebXR-supported mobile browser.';
     }
 
-    renderer.setAnimationLoop(() => {
+    renderer.setAnimationLoop((time, frame) => {
       controls.update();
+
+      if (renderer.xr.isPresenting && frame && xrHitTestSource && xrReferenceSpace && !scenePlacedInAR) {
+        const hitTestResults = frame.getHitTestResults(xrHitTestSource);
+        if (hitTestResults.length) {
+          const hit = hitTestResults[0];
+          const pose = hit.getPose(xrReferenceSpace);
+          if (pose) {
+            tempMatrix.fromArray(pose.transform.matrix);
+            placementRing.visible = true;
+            placementRing.position.setFromMatrixPosition(tempMatrix);
+          }
+        } else {
+          placementRing.visible = false;
+        }
+      }
+
       renderer.render(scene, camera);
     });
   </script>
