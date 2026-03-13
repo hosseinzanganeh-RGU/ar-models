@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Advanced AR Teaching Tool</title>
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <title>Advanced AR Teaching Tool 3D Scene</title>
   <style>
     :root {
       --bg: #f4f7fb;
@@ -32,7 +31,7 @@
 
     .app {
       display: grid;
-      grid-template-columns: 420px 1fr;
+      grid-template-columns: 430px 1fr;
       gap: 18px;
       padding: 18px;
       min-height: 100vh;
@@ -192,105 +191,40 @@
       align-items: center;
     }
 
-    .tabs {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .tab-btn {
-      background: #e8eefb;
-      color: #1e3a8a;
-    }
-
-    .tab-btn.active {
-      background: var(--primary);
-      color: #fff;
-    }
-
-    .stage-wrap {
+    .viewport {
       position: relative;
-      min-height: 680px;
-      background: linear-gradient(180deg, #f8fbff 0%, #edf3fb 100%);
-      overflow: hidden;
+      min-height: 720px;
+      background: linear-gradient(180deg, #eef4fb 0%, #e8eef7 100%);
     }
 
-    .stage-grid {
+    #canvasWrap {
       position: absolute;
       inset: 0;
-      background-image:
-        linear-gradient(rgba(37,99,235,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(37,99,235,0.06) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
     }
 
-    .stage {
-      position: relative;
+    canvas {
       width: 100%;
       height: 100%;
-      min-height: 680px;
+      display: block;
     }
 
-    .scene-item {
+    .overlay-panel {
       position: absolute;
-      transform: translate(-50%, -50%);
-      border: 2px solid rgba(37,99,235,0.25);
-      border-radius: 18px;
+      top: 16px;
+      right: 16px;
       background: rgba(255,255,255,0.92);
-      box-shadow: 0 12px 24px rgba(15,23,42,0.10);
-      overflow: hidden;
-      user-select: none;
-      transition: opacity 0.25s ease, left 0.25s ease, top 0.25s ease;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      max-width: 320px;
+      backdrop-filter: blur(10px);
     }
 
-    .scene-item.selected {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(37,99,235,0.16), 0 12px 24px rgba(15,23,42,0.10);
-    }
-
-    .scene-item.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .item-head {
+    .legend {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 10px 6px 10px;
-      font-size: 0.84rem;
-      font-weight: bold;
-      background: rgba(248,250,252,0.95);
-      border-bottom: 1px solid rgba(217,226,236,0.9);
-      cursor: grab;
-    }
-
-    .item-badge {
-      font-size: 0.7rem;
-      background: #dbeafe;
-      color: #1d4ed8;
-      border-radius: 999px;
-      padding: 3px 7px;
-    }
-
-    .item-model {
-      width: 100%;
-      height: calc(100% - 34px);
-      background: transparent;
-      --poster-color: transparent;
-    }
-
-    .empty-note {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 30px;
-      color: var(--muted);
-      font-size: 1rem;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
     }
 
     .pill {
@@ -300,14 +234,18 @@
       background: #eef2ff;
       color: #3730a3;
       font-size: 0.8rem;
-      margin-right: 8px;
     }
 
-    .mono {
-      font-family: Consolas, monospace;
+    #arButtonContainer button {
+      width: 100%;
+      margin-top: 10px;
+      background: var(--success);
+    }
+
+    .status {
       font-size: 0.84rem;
-      white-space: pre-wrap;
-      word-break: break-word;
+      color: var(--muted);
+      margin-top: 8px;
     }
 
     @media (max-width: 1100px) {
@@ -318,9 +256,8 @@
       .workspace {
         min-height: auto;
       }
-      .stage,
-      .stage-wrap {
-        min-height: 540px;
+      .viewport {
+        min-height: 560px;
       }
     }
   </style>
@@ -331,15 +268,11 @@
       <div class="section stack">
         <div>
           <h1>Advanced AR Teaching Tool</h1>
-          <p>This version uses one shared scene. You upload several GLB files, place them in different positions in the same scene, add tap actions, and then preview the designed scene and interactions.</p>
+          <p>This version creates one true 3D scene. You upload several GLB files, insert them into a shared 3D space, set their x, y, z positions, add actions, and then preview the same scene. On supported mobile devices, the AR mode shows that scene in the real world.</p>
         </div>
         <div class="help-box small">
-          <strong>How it works</strong><br>
-          1. Upload several GLB files.<br>
-          2. Add selected models into the empty scene.<br>
-          3. Drag them or edit their position values.<br>
-          4. Assign tap actions such as move, hide, or toggle.<br>
-          5. Switch to Preview mode and test the scene interactions.
+          <strong>Important note</strong><br>
+          Real-world AR preview uses WebXR. It works best on Android Chrome and other WebXR-supported browsers. iPhone Safari usually does not support this full multi-object WebXR workflow. For mobile AR, this HTML file must be hosted over HTTPS such as GitHub Pages.
         </div>
       </div>
 
@@ -354,30 +287,34 @@
       </div>
 
       <div class="section stack">
-        <h2>2. Add selected model to scene</h2>
-        <div class="small">Select a model from the uploaded list, then add it into the scene.</div>
+        <h2>2. Insert selected model into scene</h2>
+        <div class="small">Select an uploaded model, then set where it should appear in 3D space.</div>
         <div>
           <label for="itemLabel">Scene label</label>
-          <input type="text" id="itemLabel" placeholder="e.g. Gearbox A" />
+          <input type="text" id="itemLabel" placeholder="e.g. Gearbox" />
         </div>
         <div class="row">
           <div>
-            <label for="posX">X (%)</label>
-            <input type="number" id="posX" min="5" max="95" step="1" value="25" />
+            <label for="posX">X</label>
+            <input type="number" id="posX" step="0.1" value="0" />
           </div>
           <div>
-            <label for="posY">Y (%)</label>
-            <input type="number" id="posY" min="5" max="95" step="1" value="50" />
+            <label for="posY">Y</label>
+            <input type="number" id="posY" step="0.1" value="0" />
+          </div>
+          <div>
+            <label for="posZ">Z</label>
+            <input type="number" id="posZ" step="0.1" value="0" />
           </div>
         </div>
         <div class="row">
           <div>
-            <label for="itemWidth">Width (px)</label>
-            <input type="number" id="itemWidth" min="120" max="420" step="10" value="180" />
+            <label for="rotY">Y Rotation (deg)</label>
+            <input type="number" id="rotY" step="5" value="0" />
           </div>
           <div>
-            <label for="itemHeight">Height (px)</label>
-            <input type="number" id="itemHeight" min="120" max="420" step="10" value="180" />
+            <label for="scaleVal">Scale</label>
+            <input type="number" id="scaleVal" step="0.1" min="0.1" value="1" />
           </div>
         </div>
         <div class="row">
@@ -388,24 +325,28 @@
 
       <div class="section stack">
         <h2>3. Tap action planner</h2>
-        <div class="small">Select a scene item, then assign what should happen when it is tapped in Preview mode.</div>
+        <div class="small">Select a scene item and define what happens when it is clicked in desktop preview or tapped in AR preview.</div>
         <div>
           <label for="actionType">Action type</label>
           <select id="actionType">
-            <option value="move">Move to new location</option>
+            <option value="move">Move to new position</option>
             <option value="hide">Hide item</option>
             <option value="show">Show item</option>
-            <option value="toggle">Toggle show/hide</option>
+            <option value="toggle">Toggle visibility</option>
           </select>
         </div>
-        <div class="row" id="targetPositionRow">
+        <div id="targetRow1" class="row">
           <div>
-            <label for="targetX">Target X (%)</label>
-            <input type="number" id="targetX" min="5" max="95" step="1" value="75" />
+            <label for="targetX">Target X</label>
+            <input type="number" id="targetX" step="0.1" value="1" />
           </div>
           <div>
-            <label for="targetY">Target Y (%)</label>
-            <input type="number" id="targetY" min="5" max="95" step="1" value="30" />
+            <label for="targetY">Target Y</label>
+            <input type="number" id="targetY" step="0.1" value="0" />
+          </div>
+          <div>
+            <label for="targetZ">Target Z</label>
+            <input type="number" id="targetZ" step="0.1" value="0" />
           </div>
         </div>
         <div>
@@ -428,36 +369,51 @@
     <div class="workspace">
       <div class="workspace-head stack">
         <div>
-          <h2 style="margin-bottom:6px;">Shared scene workspace</h2>
-          <div class="small">
-            <span class="pill">Editor mode: drag and arrange items</span>
-            <span class="pill">Preview mode: tap items and test actions</span>
+          <h2 style="margin-bottom:6px;">3D scene editor and AR preview</h2>
+          <div class="legend">
+            <span class="pill">Mouse: orbit</span>
+            <span class="pill">Shift + drag: pan</span>
+            <span class="pill">Wheel: zoom</span>
+            <span class="pill">Click object: select or test action</span>
           </div>
-        </div>
-        <div class="tabs">
-          <button id="editorTabBtn" class="tab-btn active">Editor mode</button>
-          <button id="previewTabBtn" class="tab-btn">Preview mode</button>
-          <button id="resetSceneBtn" class="secondary">Reset scene state</button>
         </div>
       </div>
 
-      <div class="stage-wrap">
-        <div class="stage-grid"></div>
-        <div id="sceneStage" class="stage"></div>
-        <div id="emptyNote" class="empty-note">Your scene is currently empty.<br><br>Upload GLB files, select one, and add it into the scene.</div>
+      <div class="viewport">
+        <div id="canvasWrap"></div>
+        <div class="overlay-panel">
+          <strong id="selectedTitle">No item selected</strong>
+          <div class="status" id="selectedMeta">Upload models and add them into the 3D scene.</div>
+          <div id="arButtonContainer"></div>
+          <div class="status" id="arNote">AR button appears only when supported by the device/browser.</div>
+          <div class="row" style="margin-top:10px;">
+            <button id="resetSceneBtn" class="secondary">Reset scene</button>
+            <button id="previewActionsBtn">Preview actions</button>
+          </div>
+        </div>
       </div>
 
       <div class="workspace-foot">
-        <div class="stack" style="gap:6px;">
-          <div><strong id="selectedTitle">No item selected</strong></div>
-          <div class="small" id="selectedMeta">Select a model, add it into the scene, then edit its settings.</div>
-        </div>
-        <div class="small" id="modeHelp">In Editor mode, drag items to reposition them.</div>
+        <div class="small" id="modeHelp">Desktop preview is always active here. Clicking a model selects it, and action testing can be toggled on.</div>
       </div>
     </div>
   </div>
 
-  <script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { ARButton } from 'three/addons/webxr/ARButton.js';
+
     const fileInput = document.getElementById('fileInput');
     const clearAllBtn = document.getElementById('clearAllBtn');
     const exportBtn = document.getElementById('exportBtn');
@@ -465,41 +421,75 @@
     const itemLabel = document.getElementById('itemLabel');
     const posX = document.getElementById('posX');
     const posY = document.getElementById('posY');
-    const itemWidth = document.getElementById('itemWidth');
-    const itemHeight = document.getElementById('itemHeight');
+    const posZ = document.getElementById('posZ');
+    const rotY = document.getElementById('rotY');
+    const scaleVal = document.getElementById('scaleVal');
     const addToSceneBtn = document.getElementById('addToSceneBtn');
     const updateItemBtn = document.getElementById('updateItemBtn');
     const actionType = document.getElementById('actionType');
-    const targetPositionRow = document.getElementById('targetPositionRow');
+    const targetRow1 = document.getElementById('targetRow1');
     const targetX = document.getElementById('targetX');
     const targetY = document.getElementById('targetY');
+    const targetZ = document.getElementById('targetZ');
     const actionNote = document.getElementById('actionNote');
     const assignActionBtn = document.getElementById('assignActionBtn');
     const clearActionBtn = document.getElementById('clearActionBtn');
     const actionList = document.getElementById('actionList');
     const exportBox = document.getElementById('exportBox');
-    const sceneStage = document.getElementById('sceneStage');
-    const emptyNote = document.getElementById('emptyNote');
-    const editorTabBtn = document.getElementById('editorTabBtn');
-    const previewTabBtn = document.getElementById('previewTabBtn');
-    const resetSceneBtn = document.getElementById('resetSceneBtn');
+    const canvasWrap = document.getElementById('canvasWrap');
     const selectedTitle = document.getElementById('selectedTitle');
     const selectedMeta = document.getElementById('selectedMeta');
-    const modeHelp = document.getElementById('modeHelp');
+    const arButtonContainer = document.getElementById('arButtonContainer');
+    const arNote = document.getElementById('arNote');
+    const resetSceneBtn = document.getElementById('resetSceneBtn');
+    const previewActionsBtn = document.getElementById('previewActionsBtn');
 
     const models = [];
     const sceneItems = [];
     let selectedModelId = null;
     let selectedSceneItemId = null;
-    let currentMode = 'editor';
-    let dragState = null;
+    let actionsEnabled = false;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xeef4fb);
+
+    const camera = new THREE.PerspectiveCamera(55, 1, 0.01, 100);
+    camera.position.set(3.2, 2.2, 4.4);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(canvasWrap.clientWidth, canvasWrap.clientHeight);
+    renderer.xr.enabled = true;
+    canvasWrap.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.target.set(0, 0.6, 0);
+
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x94a3b8, 1.2);
+    scene.add(hemi);
+
+    const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+    dir.position.set(3, 6, 4);
+    scene.add(dir);
+
+    const grid = new THREE.GridHelper(10, 20, 0x94a3b8, 0xcbd5e1);
+    scene.add(grid);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(10, 10),
+      new THREE.MeshStandardMaterial({ color: 0xf8fafc, transparent: true, opacity: 0.9 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const loader = new GLTFLoader();
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
 
     function makeId(prefix) {
       return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
-    }
-
-    function clamp(v, min, max) {
-      return Math.max(min, Math.min(max, v));
     }
 
     function getSelectedModel() {
@@ -511,16 +501,11 @@
     }
 
     function toggleTargetVisibility() {
-      targetPositionRow.style.display = actionType.value === 'move' ? 'flex' : 'none';
-    }
-
-    function updateEmptyState() {
-      emptyNote.style.display = sceneItems.length ? 'none' : 'flex';
+      targetRow1.style.display = actionType.value === 'move' ? 'flex' : 'none';
     }
 
     function renderModels() {
       modelList.innerHTML = '';
-
       if (!models.length) {
         const empty = document.createElement('div');
         empty.className = 'card';
@@ -532,12 +517,10 @@
       models.forEach(model => {
         const card = document.createElement('div');
         card.className = 'card' + (model.id === selectedModelId ? ' active' : '');
-
         card.innerHTML = `
           <div class="card-title">${model.name}</div>
           <div class="meta">${Math.round(model.size / 1024)} KB</div>
         `;
-
         const row = document.createElement('div');
         row.className = 'row';
 
@@ -549,80 +532,24 @@
           itemLabel.value = model.name.replace(/\.glb$/i, '');
         };
 
-        const quickAddBtn = document.createElement('button');
-        quickAddBtn.textContent = 'Add';
-        quickAddBtn.className = 'secondary';
-        quickAddBtn.onclick = () => {
+        const addBtn = document.createElement('button');
+        addBtn.className = 'secondary';
+        addBtn.textContent = 'Add';
+        addBtn.onclick = () => {
           selectedModelId = model.id;
           renderModels();
           addSelectedModelToScene();
         };
 
         row.appendChild(selectBtn);
-        row.appendChild(quickAddBtn);
+        row.appendChild(addBtn);
         card.appendChild(row);
         modelList.appendChild(card);
       });
     }
 
-    function renderScene() {
-      sceneStage.innerHTML = '';
-
-      sceneItems.forEach(item => {
-        const model = models.find(m => m.id === item.modelId);
-        const el = document.createElement('div');
-        el.className = 'scene-item' + (item.id === selectedSceneItemId ? ' selected' : '') + (item.hidden ? ' hidden' : '');
-        el.style.left = item.x + '%';
-        el.style.top = item.y + '%';
-        el.style.width = item.width + 'px';
-        el.style.height = item.height + 'px';
-        el.dataset.id = item.id;
-
-        const head = document.createElement('div');
-        head.className = 'item-head';
-        head.innerHTML = `<span>${item.label}</span><span class="item-badge">tap</span>`;
-
-        const mv = document.createElement('model-viewer');
-        mv.className = 'item-model';
-        mv.src = model ? model.url : '';
-        mv.alt = item.label;
-        mv.setAttribute('camera-controls', '');
-        mv.setAttribute('disable-zoom', '');
-        mv.setAttribute('auto-rotate', '');
-        mv.setAttribute('shadow-intensity', '1');
-        mv.setAttribute('interaction-prompt', 'none');
-
-        el.appendChild(head);
-        el.appendChild(mv);
-
-        el.addEventListener('click', (e) => {
-          e.stopPropagation();
-          selectedSceneItemId = item.id;
-          hydrateControlsFromItem();
-
-          if (currentMode === 'preview') {
-            runAction(item);
-            renderScene();
-            renderActionList();
-          } else {
-            renderScene();
-          }
-        });
-
-        if (currentMode === 'editor') {
-          head.addEventListener('pointerdown', (e) => startDrag(e, item.id));
-        }
-
-        sceneStage.appendChild(el);
-      });
-
-      updateEmptyState();
-      updateSelectionInfo();
-    }
-
     function renderActionList() {
       actionList.innerHTML = '';
-
       if (!sceneItems.length) {
         const empty = document.createElement('div');
         empty.className = 'card';
@@ -634,21 +561,18 @@
       sceneItems.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card' + (item.id === selectedSceneItemId ? ' active' : '');
-
         let desc = 'No action assigned';
         if (item.action) {
-          if (item.action.type === 'move') desc = `Tap moves to (${item.action.targetX}%, ${item.action.targetY}%)`;
+          if (item.action.type === 'move') desc = `Tap moves to (${item.action.targetX}, ${item.action.targetY}, ${item.action.targetZ})`;
           if (item.action.type === 'hide') desc = 'Tap hides this item';
           if (item.action.type === 'show') desc = 'Tap shows this item';
           if (item.action.type === 'toggle') desc = 'Tap toggles visibility';
         }
-
         card.innerHTML = `
           <div class="card-title">${item.label}</div>
           <div class="meta">${desc}</div>
           <div class="small">${item.action?.note || 'No note'}</div>
         `;
-
         actionList.appendChild(card);
       });
     }
@@ -657,47 +581,88 @@
       const item = getSelectedItem();
       if (!item) {
         selectedTitle.textContent = 'No item selected';
-        selectedMeta.textContent = 'Select a model, add it into the scene, then edit its settings.';
+        selectedMeta.textContent = 'Upload models and add them into the 3D scene.';
         return;
       }
-
       const model = models.find(m => m.id === item.modelId);
-      const actionText = item.action ? item.action.type : 'none';
+      const p = item.group.position;
+      const s = item.group.scale.x;
+      const r = THREE.MathUtils.radToDeg(item.group.rotation.y);
       selectedTitle.textContent = item.label;
-      selectedMeta.textContent = `Model: ${model ? model.name : 'Unknown'} | Position: (${item.x}%, ${item.y}%) | Size: ${item.width} × ${item.height}px | Action: ${actionText}`;
+      selectedMeta.textContent = `Model: ${model ? model.name : 'Unknown'} | Position: (${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)}) | Rotation Y: ${r.toFixed(0)}° | Scale: ${s.toFixed(2)}`;
     }
 
     function hydrateControlsFromItem() {
       const item = getSelectedItem();
       if (!item) return;
-
       itemLabel.value = item.label;
-      posX.value = item.x;
-      posY.value = item.y;
-      itemWidth.value = item.width;
-      itemHeight.value = item.height;
+      posX.value = item.group.position.x.toFixed(2);
+      posY.value = item.group.position.y.toFixed(2);
+      posZ.value = item.group.position.z.toFixed(2);
+      rotY.value = THREE.MathUtils.radToDeg(item.group.rotation.y).toFixed(0);
+      scaleVal.value = item.group.scale.x.toFixed(2);
       actionType.value = item.action?.type || 'move';
-      targetX.value = item.action?.targetX ?? 75;
-      targetY.value = item.action?.targetY ?? 30;
+      targetX.value = item.action?.targetX ?? 1;
+      targetY.value = item.action?.targetY ?? 0;
+      targetZ.value = item.action?.targetZ ?? 0;
       actionNote.value = item.action?.note || '';
       toggleTargetVisibility();
+      highlightSelection();
       updateSelectionInfo();
     }
 
-    function addModelFromFile(file) {
-      if (!file.name.toLowerCase().endsWith('.glb')) return;
+    function highlightSelection() {
+      sceneItems.forEach(item => {
+        item.box.material.color.set(item.id === selectedSceneItemId ? 0x2563eb : 0x94a3b8);
+        item.box.material.opacity = item.id === selectedSceneItemId ? 0.35 : 0.18;
+      });
+    }
 
+    function fitModel(group) {
+      const box = new THREE.Box3().setFromObject(group);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const maxDim = Math.max(size.x, size.y, size.z) || 1;
+      const scale = 1 / maxDim;
+      group.scale.setScalar(scale);
+      box.setFromObject(group);
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+      group.position.sub(center);
+      box.setFromObject(group);
+      group.position.y -= box.min.y;
+    }
+
+    async function addModelFromFile(file) {
+      if (!file.name.toLowerCase().endsWith('.glb')) return;
+      const url = URL.createObjectURL(file);
+      const gltf = await loader.loadAsync(url);
+      const root = gltf.scene || gltf.scenes[0];
+      fitModel(root);
       const model = {
         id: makeId('model'),
         name: file.name,
         size: file.size,
-        url: URL.createObjectURL(file)
+        url,
+        template: root
       };
-
       models.push(model);
       selectedModelId = model.id;
       renderModels();
       itemLabel.value = model.name.replace(/\.glb$/i, '');
+    }
+
+    function createSelectionBox(contentRoot) {
+      const bbox = new THREE.Box3().setFromObject(contentRoot);
+      const size = new THREE.Vector3();
+      bbox.getSize(size);
+      const center = new THREE.Vector3();
+      bbox.getCenter(center);
+      const boxGeo = new THREE.BoxGeometry(Math.max(size.x, 0.05), Math.max(size.y, 0.05), Math.max(size.z, 0.05));
+      const boxMat = new THREE.MeshBasicMaterial({ color: 0x94a3b8, wireframe: true, transparent: true, opacity: 0.18 });
+      const mesh = new THREE.Mesh(boxGeo, boxMat);
+      mesh.position.copy(center);
+      return mesh;
     }
 
     function addSelectedModelToScene() {
@@ -707,28 +672,43 @@
         return;
       }
 
+      const group = new THREE.Group();
+      const content = model.template.clone(true);
+      group.add(content);
+
+      const selectionBox = createSelectionBox(content);
+      group.add(selectionBox);
+
+      group.position.set(Number(posX.value) || 0, Number(posY.value) || 0, Number(posZ.value) || 0);
+      group.rotation.y = THREE.MathUtils.degToRad(Number(rotY.value) || 0);
+      group.scale.setScalar(Math.max(Number(scaleVal.value) || 1, 0.1));
+      group.userData.clickable = true;
+
+      scene.add(group);
+
       const item = {
         id: makeId('scene'),
         modelId: model.id,
         label: itemLabel.value.trim() || model.name.replace(/\.glb$/i, ''),
-        x: clamp(Number(posX.value) || 25, 5, 95),
-        y: clamp(Number(posY.value) || 50, 5, 95),
-        width: clamp(Number(itemWidth.value) || 180, 120, 420),
-        height: clamp(Number(itemHeight.value) || 180, 120, 420),
+        group,
+        box: selectionBox,
         hidden: false,
+        action: null,
         initial: {
-          x: clamp(Number(posX.value) || 25, 5, 95),
-          y: clamp(Number(posY.value) || 50, 5, 95),
+          x: group.position.x,
+          y: group.position.y,
+          z: group.position.z,
+          rotY: group.rotation.y,
+          scale: group.scale.x,
           hidden: false
-        },
-        action: null
+        }
       };
 
+      group.userData.sceneItemId = item.id;
       sceneItems.push(item);
       selectedSceneItemId = item.id;
-      renderScene();
-      renderActionList();
       hydrateControlsFromItem();
+      renderActionList();
     }
 
     function updateSelectedItem() {
@@ -739,14 +719,15 @@
       }
 
       item.label = itemLabel.value.trim() || item.label;
-      item.x = clamp(Number(posX.value) || item.x, 5, 95);
-      item.y = clamp(Number(posY.value) || item.y, 5, 95);
-      item.width = clamp(Number(itemWidth.value) || item.width, 120, 420);
-      item.height = clamp(Number(itemHeight.value) || item.height, 120, 420);
-      item.initial.x = item.x;
-      item.initial.y = item.y;
-      renderScene();
-      renderActionList();
+      item.group.position.set(Number(posX.value) || 0, Number(posY.value) || 0, Number(posZ.value) || 0);
+      item.group.rotation.y = THREE.MathUtils.degToRad(Number(rotY.value) || 0);
+      item.group.scale.setScalar(Math.max(Number(scaleVal.value) || 1, 0.1));
+      item.initial.x = item.group.position.x;
+      item.initial.y = item.group.position.y;
+      item.initial.z = item.group.position.z;
+      item.initial.rotY = item.group.rotation.y;
+      item.initial.scale = item.group.scale.x;
+      updateSelectionInfo();
     }
 
     function assignAction() {
@@ -755,16 +736,14 @@
         alert('Please select a scene item first.');
         return;
       }
-
       item.action = {
         type: actionType.value,
-        targetX: clamp(Number(targetX.value) || 75, 5, 95),
-        targetY: clamp(Number(targetY.value) || 30, 5, 95),
+        targetX: Number(targetX.value) || 0,
+        targetY: Number(targetY.value) || 0,
+        targetZ: Number(targetZ.value) || 0,
         note: actionNote.value.trim()
       };
-
       renderActionList();
-      updateSelectionInfo();
     }
 
     function clearAction() {
@@ -772,35 +751,37 @@
       if (!item) return;
       item.action = null;
       renderActionList();
-      updateSelectionInfo();
     }
 
     function runAction(item) {
       if (!item.action) return;
-
       if (item.action.type === 'move') {
-        item.x = item.action.targetX;
-        item.y = item.action.targetY;
+        item.group.position.set(item.action.targetX, item.action.targetY, item.action.targetZ);
       }
       if (item.action.type === 'hide') {
         item.hidden = true;
+        item.group.visible = false;
       }
       if (item.action.type === 'show') {
         item.hidden = false;
+        item.group.visible = true;
       }
       if (item.action.type === 'toggle') {
         item.hidden = !item.hidden;
+        item.group.visible = !item.hidden;
       }
+      updateSelectionInfo();
     }
 
-    function resetSceneState() {
+    function resetScene() {
       sceneItems.forEach(item => {
-        item.x = item.initial.x;
-        item.y = item.initial.y;
+        item.group.position.set(item.initial.x, item.initial.y, item.initial.z);
+        item.group.rotation.y = item.initial.rotY;
+        item.group.scale.setScalar(item.initial.scale);
         item.hidden = item.initial.hidden;
+        item.group.visible = !item.hidden;
       });
-      renderScene();
-      renderActionList();
+      updateSelectionInfo();
     }
 
     function exportScene() {
@@ -810,10 +791,13 @@
           id: item.id,
           modelId: item.modelId,
           label: item.label,
-          x: item.x,
-          y: item.y,
-          width: item.width,
-          height: item.height,
+          position: {
+            x: item.group.position.x,
+            y: item.group.position.y,
+            z: item.group.position.z
+          },
+          rotationYDeg: THREE.MathUtils.radToDeg(item.group.rotation.y),
+          scale: item.group.scale.x,
           hidden: item.hidden,
           action: item.action
         }))
@@ -821,66 +805,48 @@
       exportBox.value = JSON.stringify(payload, null, 2);
     }
 
-    function setMode(mode) {
-      currentMode = mode;
-      editorTabBtn.classList.toggle('active', mode === 'editor');
-      previewTabBtn.classList.toggle('active', mode === 'preview');
-      modeHelp.textContent = mode === 'editor'
-        ? 'In Editor mode, drag items to reposition them.'
-        : 'In Preview mode, tap items to test their assigned actions.';
-      renderScene();
-    }
+    function handlePointer(event) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
 
-    function startDrag(e, itemId) {
-      if (currentMode !== 'editor') return;
-      const rect = sceneStage.getBoundingClientRect();
-      const item = sceneItems.find(i => i.id === itemId);
+      const roots = sceneItems.map(item => item.group);
+      const intersects = raycaster.intersectObjects(roots, true);
+      if (!intersects.length) return;
+
+      let object = intersects[0].object;
+      while (object && !object.userData.sceneItemId && object.parent) object = object.parent;
+      if (!object || !object.userData.sceneItemId) return;
+
+      selectedSceneItemId = object.userData.sceneItemId;
+      const item = getSelectedItem();
       if (!item) return;
-
-      dragState = {
-        itemId,
-        rect
-      };
-
-      selectedSceneItemId = itemId;
       hydrateControlsFromItem();
-      renderScene();
-      window.addEventListener('pointermove', onDrag);
-      window.addEventListener('pointerup', stopDrag);
-      e.preventDefault();
+      if (actionsEnabled) runAction(item);
     }
 
-    function onDrag(e) {
-      if (!dragState) return;
-      const item = sceneItems.find(i => i.id === dragState.itemId);
-      if (!item) return;
-
-      const xPct = clamp(((e.clientX - dragState.rect.left) / dragState.rect.width) * 100, 5, 95);
-      const yPct = clamp(((e.clientY - dragState.rect.top) / dragState.rect.height) * 100, 5, 95);
-      item.x = Math.round(xPct);
-      item.y = Math.round(yPct);
-      posX.value = item.x;
-      posY.value = item.y;
-      renderScene();
+    function onResize() {
+      const w = canvasWrap.clientWidth;
+      const h = canvasWrap.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
     }
 
-    function stopDrag() {
-      if (!dragState) return;
-      const item = sceneItems.find(i => i.id === dragState.itemId);
-      if (item) {
-        item.initial.x = item.x;
-        item.initial.y = item.y;
+    fileInput.addEventListener('change', async (e) => {
+      for (const file of Array.from(e.target.files)) {
+        try {
+          await addModelFromFile(file);
+        } catch (err) {
+          console.error(err);
+          alert(`Could not load ${file.name}`);
+        }
       }
-      dragState = null;
-      window.removeEventListener('pointermove', onDrag);
-      window.removeEventListener('pointerup', stopDrag);
-    }
-
-    fileInput.addEventListener('change', (e) => {
-      Array.from(e.target.files).forEach(addModelFromFile);
     });
 
     clearAllBtn.addEventListener('click', () => {
+      sceneItems.forEach(item => scene.remove(item.group));
       models.forEach(m => {
         if (m.url && m.url.startsWith('blob:')) URL.revokeObjectURL(m.url);
       });
@@ -888,11 +854,11 @@
       sceneItems.length = 0;
       selectedModelId = null;
       selectedSceneItemId = null;
-      exportBox.value = '';
       itemLabel.value = '';
+      exportBox.value = '';
       renderModels();
-      renderScene();
       renderActionList();
+      updateSelectionInfo();
     });
 
     exportBtn.addEventListener('click', exportScene);
@@ -900,22 +866,34 @@
     updateItemBtn.addEventListener('click', updateSelectedItem);
     assignActionBtn.addEventListener('click', assignAction);
     clearActionBtn.addEventListener('click', clearAction);
-    resetSceneBtn.addEventListener('click', resetSceneState);
-    editorTabBtn.addEventListener('click', () => setMode('editor'));
-    previewTabBtn.addEventListener('click', () => setMode('preview'));
-    actionType.addEventListener('change', toggleTargetVisibility);
-
-    sceneStage.addEventListener('click', (e) => {
-      if (e.target === sceneStage) {
-        selectedSceneItemId = null;
-        renderScene();
-      }
+    resetSceneBtn.addEventListener('click', resetScene);
+    previewActionsBtn.addEventListener('click', () => {
+      actionsEnabled = !actionsEnabled;
+      previewActionsBtn.textContent = actionsEnabled ? 'Stop preview' : 'Preview actions';
+      previewActionsBtn.classList.toggle('secondary', !actionsEnabled);
     });
+    actionType.addEventListener('change', toggleTargetVisibility);
+    renderer.domElement.addEventListener('pointerdown', handlePointer);
+    window.addEventListener('resize', onResize);
 
     toggleTargetVisibility();
     renderModels();
-    renderScene();
     renderActionList();
+    updateSelectionInfo();
+    onResize();
+
+    try {
+      const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
+      arButtonContainer.appendChild(arButton);
+      arNote.textContent = 'If supported, tap Start AR to place and view the 3D scene in the real world.';
+    } catch (err) {
+      arNote.textContent = 'AR preview is not available in this browser. Host the file on HTTPS and try a WebXR-supported mobile browser.';
+    }
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
   </script>
 </body>
 </html>
