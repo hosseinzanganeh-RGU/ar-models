@@ -7,20 +7,22 @@
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <style>
     :root {
-      --bg: #f3f6fb;
+      --bg: #f4f7fb;
       --panel: #ffffff;
+      --line: #d9e2ec;
       --text: #1f2937;
       --muted: #6b7280;
-      --line: #dbe3ee;
       --primary: #2563eb;
       --primary-dark: #1d4ed8;
-      --danger: #dc2626;
+      --secondary: #64748b;
       --success: #15803d;
+      --danger: #dc2626;
       --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
       --radius: 18px;
     }
 
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -30,13 +32,14 @@
 
     .app {
       display: grid;
-      grid-template-columns: 430px 1fr;
-      min-height: 100vh;
+      grid-template-columns: 420px 1fr;
       gap: 18px;
       padding: 18px;
+      min-height: 100vh;
     }
 
-    .panel, .viewer-wrap {
+    .panel,
+    .workspace {
       background: var(--panel);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
@@ -58,15 +61,16 @@
 
     h1 {
       margin: 0 0 6px 0;
-      font-size: 1.65rem;
+      font-size: 1.6rem;
     }
 
     h2 {
       margin: 0 0 12px 0;
-      font-size: 1.05rem;
+      font-size: 1.04rem;
     }
 
-    p, .small {
+    p,
+    .small {
       margin: 0;
       color: var(--muted);
       line-height: 1.45;
@@ -84,7 +88,10 @@
       font-weight: bold;
     }
 
-    input[type="text"], input[type="number"], select, textarea {
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
       width: 100%;
       padding: 10px 12px;
       border: 1px solid var(--line);
@@ -94,7 +101,7 @@
     }
 
     textarea {
-      min-height: 82px;
+      min-height: 84px;
       resize: vertical;
     }
 
@@ -118,12 +125,13 @@
     }
 
     button:hover { background: var(--primary-dark); }
-    button.secondary { background: #64748b; }
+    button.secondary { background: var(--secondary); }
     button.secondary:hover { background: #475569; }
-    button.danger { background: var(--danger); }
     button.success { background: var(--success); }
+    button.danger { background: var(--danger); }
 
-    .model-list, .action-list {
+    .model-list,
+    .action-list {
       display: grid;
       gap: 10px;
       max-height: 240px;
@@ -155,29 +163,26 @@
       margin-bottom: 10px;
     }
 
-    .tag {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #e8eefc;
-      color: var(--primary-dark);
-      font-size: 0.78rem;
-      margin-right: 6px;
-      margin-bottom: 6px;
+    .help-box {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: #f8fbff;
     }
 
-    .viewer-wrap {
+    .workspace {
       display: grid;
       grid-template-rows: auto 1fr auto;
       min-height: calc(100vh - 36px);
     }
 
-    .viewer-head, .viewer-foot {
+    .workspace-head,
+    .workspace-foot {
       padding: 16px 18px;
       border-bottom: 1px solid var(--line);
     }
 
-    .viewer-foot {
+    .workspace-foot {
       border-bottom: 0;
       border-top: 1px solid var(--line);
       display: flex;
@@ -187,83 +192,105 @@
       align-items: center;
     }
 
-    .viewer-stage {
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: #e8eefb;
+      color: #1e3a8a;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .stage-wrap {
       position: relative;
-      min-height: 620px;
-      background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+      min-height: 680px;
+      background: linear-gradient(180deg, #f8fbff 0%, #edf3fb 100%);
+      overflow: hidden;
     }
 
-    model-viewer {
-      width: 100%;
-      height: 100%;
-      min-height: 620px;
-      background: transparent;
-      --poster-color: transparent;
-    }
-
-    .overlay {
+    .stage-grid {
       position: absolute;
       inset: 0;
+      background-image:
+        linear-gradient(rgba(37,99,235,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,0.06) 1px, transparent 1px);
+      background-size: 40px 40px;
       pointer-events: none;
+    }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 680px;
     }
 
     .scene-item {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 130px;
-      height: 130px;
+      border: 2px solid rgba(37,99,235,0.25);
       border-radius: 18px;
-      background: rgba(255,255,255,0.18);
-      border: 2px dashed rgba(37,99,235,0.35);
-      color: #0f172a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 10px;
-      backdrop-filter: blur(4px);
-      pointer-events: auto;
-      cursor: pointer;
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 12px 24px rgba(15,23,42,0.10);
+      overflow: hidden;
       user-select: none;
-      transition: 0.25s ease;
-      font-size: 0.88rem;
-      font-weight: bold;
+      transition: opacity 0.25s ease, left 0.25s ease, top 0.25s ease;
+    }
+
+    .scene-item.selected {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.16), 0 12px 24px rgba(15,23,42,0.10);
     }
 
     .scene-item.hidden {
       opacity: 0;
-      visibility: hidden;
       pointer-events: none;
     }
 
-    .scene-item.selected {
-      box-shadow: 0 0 0 4px rgba(37,99,235,0.18);
-      border-color: var(--primary);
+    .item-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px 6px 10px;
+      font-size: 0.84rem;
+      font-weight: bold;
+      background: rgba(248,250,252,0.95);
+      border-bottom: 1px solid rgba(217,226,236,0.9);
+      cursor: grab;
     }
 
-    .scene-item .badge {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: rgba(255,255,255,0.85);
+    .item-badge {
+      font-size: 0.7rem;
+      background: #dbeafe;
+      color: #1d4ed8;
       border-radius: 999px;
       padding: 3px 7px;
-      font-size: 0.72rem;
-      color: var(--primary-dark);
     }
 
-    .help-box {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 12px;
-      background: #f8fbff;
+    .item-model {
+      width: 100%;
+      height: calc(100% - 34px);
+      background: transparent;
+      --poster-color: transparent;
     }
 
-    .mono {
-      font-family: Consolas, monospace;
-      font-size: 0.85rem;
-      white-space: pre-wrap;
-      word-break: break-word;
+    .empty-note {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 30px;
+      color: var(--muted);
+      font-size: 1rem;
     }
 
     .pill {
@@ -276,15 +303,24 @@
       margin-right: 8px;
     }
 
+    .mono {
+      font-family: Consolas, monospace;
+      font-size: 0.84rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
     @media (max-width: 1100px) {
       .app {
         grid-template-columns: 1fr;
       }
-      .panel, .viewer-wrap {
+      .panel,
+      .workspace {
         min-height: auto;
       }
-      model-viewer, .viewer-stage {
-        min-height: 520px;
+      .stage,
+      .stage-wrap {
+        min-height: 540px;
       }
     }
   </style>
@@ -295,13 +331,15 @@
       <div class="section stack">
         <div>
           <h1>Advanced AR Teaching Tool</h1>
-          <p>Upload several GLB files, assign simple tap actions, arrange the scene, and preview it with an AR-ready viewer. This first version uses a 2D scene planner plus a real-world AR viewer for one selected model at a time.</p>
+          <p>This version uses one shared scene. You upload several GLB files, place them in different positions in the same scene, add tap actions, and then preview the designed scene and interactions.</p>
         </div>
         <div class="help-box small">
-          <strong>How this version works</strong><br>
-          Part 1: build your scene and define interactions.<br>
-          Part 2: preview the currently selected model in the viewer and launch AR on mobile.<br>
-          For mobile AR, this file should be hosted online over HTTPS.
+          <strong>How it works</strong><br>
+          1. Upload several GLB files.<br>
+          2. Add selected models into the empty scene.<br>
+          3. Drag them or edit their position values.<br>
+          4. Assign tap actions such as move, hide, or toggle.<br>
+          5. Switch to Preview mode and test the scene interactions.
         </div>
       </div>
 
@@ -309,53 +347,54 @@
         <h2>1. Upload models</h2>
         <input type="file" id="fileInput" accept=".glb" multiple />
         <div class="row">
-          <button id="clearModelsBtn" class="secondary">Clear models</button>
-          <button id="loadDemoBtn">Load demo placeholders</button>
+          <button id="clearAllBtn" class="secondary">Clear all</button>
+          <button id="exportBtn">Export scene JSON</button>
         </div>
         <div id="modelList" class="model-list"></div>
       </div>
 
       <div class="section stack">
-        <h2>2. Scene item settings</h2>
-        <div class="small">Select a model card or scene item first.</div>
+        <h2>2. Add selected model to scene</h2>
+        <div class="small">Select a model from the uploaded list, then add it into the scene.</div>
         <div>
-          <label for="itemLabel">Display label</label>
-          <input type="text" id="itemLabel" placeholder="Model label in scene" />
+          <label for="itemLabel">Scene label</label>
+          <input type="text" id="itemLabel" placeholder="e.g. Gearbox A" />
         </div>
         <div class="row">
           <div>
-            <label for="posX">Scene X (%)</label>
-            <input type="number" id="posX" min="5" max="95" step="1" />
+            <label for="posX">X (%)</label>
+            <input type="number" id="posX" min="5" max="95" step="1" value="25" />
           </div>
           <div>
-            <label for="posY">Scene Y (%)</label>
-            <input type="number" id="posY" min="5" max="95" step="1" />
+            <label for="posY">Y (%)</label>
+            <input type="number" id="posY" min="5" max="95" step="1" value="50" />
           </div>
         </div>
         <div class="row">
           <div>
-            <label for="size">Size (px)</label>
-            <input type="number" id="size" min="60" max="260" step="5" />
+            <label for="itemWidth">Width (px)</label>
+            <input type="number" id="itemWidth" min="120" max="420" step="10" value="180" />
           </div>
           <div>
-            <label for="arModel">AR preview model</label>
-            <select id="arModel"></select>
+            <label for="itemHeight">Height (px)</label>
+            <input type="number" id="itemHeight" min="120" max="420" step="10" value="180" />
           </div>
         </div>
         <div class="row">
+          <button id="addToSceneBtn" class="success">Add to scene</button>
           <button id="updateItemBtn">Update selected item</button>
-          <button id="addToSceneBtn" class="success">Add selected model to scene</button>
         </div>
       </div>
 
       <div class="section stack">
         <h2>3. Tap action planner</h2>
+        <div class="small">Select a scene item, then assign what should happen when it is tapped in Preview mode.</div>
         <div>
           <label for="actionType">Action type</label>
           <select id="actionType">
             <option value="move">Move to new location</option>
-            <option value="hide">Hide model</option>
-            <option value="show">Show model</option>
+            <option value="hide">Hide item</option>
+            <option value="show">Show item</option>
             <option value="toggle">Toggle show/hide</option>
           </select>
         </div>
@@ -371,142 +410,133 @@
         </div>
         <div>
           <label for="actionNote">Action note</label>
-          <textarea id="actionNote" placeholder="Optional teaching note or reminder"></textarea>
+          <textarea id="actionNote" placeholder="Optional teaching note"></textarea>
         </div>
         <div class="row">
-          <button id="assignActionBtn">Assign action to selected item</button>
+          <button id="assignActionBtn">Assign action</button>
           <button id="clearActionBtn" class="secondary">Clear action</button>
         </div>
-        <div id="actionSummary" class="action-list"></div>
+        <div id="actionList" class="action-list"></div>
       </div>
 
       <div class="section stack">
-        <h2>4. Export scene plan</h2>
-        <button id="exportBtn">Export scene JSON</button>
+        <h2>4. Scene export</h2>
         <textarea id="exportBox" placeholder="Exported scene data will appear here"></textarea>
       </div>
     </div>
 
-    <div class="viewer-wrap">
-      <div class="viewer-head stack">
+    <div class="workspace">
+      <div class="workspace-head stack">
         <div>
-          <h2 style="margin-bottom:6px;">Scene planner + AR preview</h2>
+          <h2 style="margin-bottom:6px;">Shared scene workspace</h2>
           <div class="small">
-            <span class="pill">Desktop: arrange and test actions</span>
-            <span class="pill">Mobile: open via HTTPS and tap AR</span>
+            <span class="pill">Editor mode: drag and arrange items</span>
+            <span class="pill">Preview mode: tap items and test actions</span>
           </div>
         </div>
+        <div class="tabs">
+          <button id="editorTabBtn" class="tab-btn active">Editor mode</button>
+          <button id="previewTabBtn" class="tab-btn">Preview mode</button>
+          <button id="resetSceneBtn" class="secondary">Reset scene state</button>
+        </div>
       </div>
 
-      <div class="viewer-stage" id="viewerStage">
-        <model-viewer
-          id="viewer"
-          src=""
-          alt="AR preview model"
-          ar
-          ar-modes="webxr scene-viewer quick-look"
-          camera-controls
-          auto-rotate
-          shadow-intensity="1"
-          exposure="1">
-        </model-viewer>
-        <div class="overlay" id="overlay"></div>
+      <div class="stage-wrap">
+        <div class="stage-grid"></div>
+        <div id="sceneStage" class="stage"></div>
+        <div id="emptyNote" class="empty-note">Your scene is currently empty.<br><br>Upload GLB files, select one, and add it into the scene.</div>
       </div>
 
-      <div class="viewer-foot">
+      <div class="workspace-foot">
         <div class="stack" style="gap:6px;">
           <div><strong id="selectedTitle">No item selected</strong></div>
-          <div class="small" id="selectedMeta">Select or add a model to begin.</div>
+          <div class="small" id="selectedMeta">Select a model, add it into the scene, then edit its settings.</div>
         </div>
-        <div class="row" style="flex:0 0 auto;">
-          <button id="resetSceneBtn" class="secondary">Reset scene state</button>
-          <button id="launchHintBtn">How to use AR</button>
-        </div>
+        <div class="small" id="modeHelp">In Editor mode, drag items to reposition them.</div>
       </div>
     </div>
   </div>
 
   <script>
     const fileInput = document.getElementById('fileInput');
-    const clearModelsBtn = document.getElementById('clearModelsBtn');
-    const loadDemoBtn = document.getElementById('loadDemoBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const exportBtn = document.getElementById('exportBtn');
     const modelList = document.getElementById('modelList');
-    const arModel = document.getElementById('arModel');
-    const overlay = document.getElementById('overlay');
-    const viewer = document.getElementById('viewer');
-    const viewerStage = document.getElementById('viewerStage');
-    const selectedTitle = document.getElementById('selectedTitle');
-    const selectedMeta = document.getElementById('selectedMeta');
-
     const itemLabel = document.getElementById('itemLabel');
     const posX = document.getElementById('posX');
     const posY = document.getElementById('posY');
-    const sizeInput = document.getElementById('size');
+    const itemWidth = document.getElementById('itemWidth');
+    const itemHeight = document.getElementById('itemHeight');
     const addToSceneBtn = document.getElementById('addToSceneBtn');
     const updateItemBtn = document.getElementById('updateItemBtn');
-
     const actionType = document.getElementById('actionType');
+    const targetPositionRow = document.getElementById('targetPositionRow');
     const targetX = document.getElementById('targetX');
     const targetY = document.getElementById('targetY');
     const actionNote = document.getElementById('actionNote');
     const assignActionBtn = document.getElementById('assignActionBtn');
     const clearActionBtn = document.getElementById('clearActionBtn');
-    const actionSummary = document.getElementById('actionSummary');
-    const targetPositionRow = document.getElementById('targetPositionRow');
-
-    const exportBtn = document.getElementById('exportBtn');
+    const actionList = document.getElementById('actionList');
     const exportBox = document.getElementById('exportBox');
+    const sceneStage = document.getElementById('sceneStage');
+    const emptyNote = document.getElementById('emptyNote');
+    const editorTabBtn = document.getElementById('editorTabBtn');
+    const previewTabBtn = document.getElementById('previewTabBtn');
     const resetSceneBtn = document.getElementById('resetSceneBtn');
-    const launchHintBtn = document.getElementById('launchHintBtn');
+    const selectedTitle = document.getElementById('selectedTitle');
+    const selectedMeta = document.getElementById('selectedMeta');
+    const modeHelp = document.getElementById('modeHelp');
 
     const models = [];
     const sceneItems = [];
     let selectedModelId = null;
     let selectedSceneItemId = null;
+    let currentMode = 'editor';
+    let dragState = null;
 
-    function makeId(prefix = 'id') {
+    function makeId(prefix) {
       return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
     }
 
     function getSelectedModel() {
       return models.find(m => m.id === selectedModelId) || null;
     }
 
-    function getSelectedSceneItem() {
+    function getSelectedItem() {
       return sceneItems.find(i => i.id === selectedSceneItemId) || null;
     }
 
-    function refreshModelDropdown() {
-      arModel.innerHTML = '';
-      const empty = document.createElement('option');
-      empty.value = '';
-      empty.textContent = models.length ? 'Use original model file' : 'No models uploaded';
-      arModel.appendChild(empty);
+    function toggleTargetVisibility() {
+      targetPositionRow.style.display = actionType.value === 'move' ? 'flex' : 'none';
+    }
 
-      models.forEach(model => {
-        const opt = document.createElement('option');
-        opt.value = model.id;
-        opt.textContent = model.name;
-        arModel.appendChild(opt);
-      });
+    function updateEmptyState() {
+      emptyNote.style.display = sceneItems.length ? 'none' : 'flex';
     }
 
     function renderModels() {
       modelList.innerHTML = '';
+
+      if (!models.length) {
+        const empty = document.createElement('div');
+        empty.className = 'card';
+        empty.innerHTML = '<div class="meta">No models uploaded yet.</div>';
+        modelList.appendChild(empty);
+        return;
+      }
+
       models.forEach(model => {
         const card = document.createElement('div');
         card.className = 'card' + (model.id === selectedModelId ? ' active' : '');
 
-        const title = document.createElement('div');
-        title.className = 'card-title';
-        title.textContent = model.name;
-
-        const meta = document.createElement('div');
-        meta.className = 'meta';
-        meta.textContent = `${Math.round(model.size / 1024)} KB`;
-
-        const tags = document.createElement('div');
-        tags.innerHTML = '<span class="tag">GLB</span><span class="tag">Tap to select</span>';
+        card.innerHTML = `
+          <div class="card-title">${model.name}</div>
+          <div class="meta">${Math.round(model.size / 1024)} KB</div>
+        `;
 
         const row = document.createElement('div');
         row.className = 'row';
@@ -516,121 +546,136 @@
         selectBtn.onclick = () => {
           selectedModelId = model.id;
           renderModels();
-          hydrateModelControls();
+          itemLabel.value = model.name.replace(/\.glb$/i, '');
         };
 
-        const previewBtn = document.createElement('button');
-        previewBtn.textContent = 'Preview';
-        previewBtn.className = 'secondary';
-        previewBtn.onclick = () => {
-          viewer.src = model.url;
-          selectedTitle.textContent = `Previewing: ${model.name}`;
-          selectedMeta.textContent = 'This is the model currently loaded in the AR viewer.';
+        const quickAddBtn = document.createElement('button');
+        quickAddBtn.textContent = 'Add';
+        quickAddBtn.className = 'secondary';
+        quickAddBtn.onclick = () => {
+          selectedModelId = model.id;
+          renderModels();
+          addSelectedModelToScene();
         };
 
         row.appendChild(selectBtn);
-        row.appendChild(previewBtn);
-
-        card.appendChild(title);
-        card.appendChild(meta);
-        card.appendChild(tags);
+        row.appendChild(quickAddBtn);
         card.appendChild(row);
         modelList.appendChild(card);
       });
-
-      refreshModelDropdown();
     }
 
     function renderScene() {
-      overlay.innerHTML = '';
+      sceneStage.innerHTML = '';
+
       sceneItems.forEach(item => {
+        const model = models.find(m => m.id === item.modelId);
         const el = document.createElement('div');
-        el.className = 'scene-item' + (item.hidden ? ' hidden' : '') + (item.id === selectedSceneItemId ? ' selected' : '');
+        el.className = 'scene-item' + (item.id === selectedSceneItemId ? ' selected' : '') + (item.hidden ? ' hidden' : '');
         el.style.left = item.x + '%';
         el.style.top = item.y + '%';
-        el.style.width = item.size + 'px';
-        el.style.height = item.size + 'px';
+        el.style.width = item.width + 'px';
+        el.style.height = item.height + 'px';
         el.dataset.id = item.id;
-        el.innerHTML = `<span>${item.label}</span><span class="badge">tap</span>`;
+
+        const head = document.createElement('div');
+        head.className = 'item-head';
+        head.innerHTML = `<span>${item.label}</span><span class="item-badge">tap</span>`;
+
+        const mv = document.createElement('model-viewer');
+        mv.className = 'item-model';
+        mv.src = model ? model.url : '';
+        mv.alt = item.label;
+        mv.setAttribute('camera-controls', '');
+        mv.setAttribute('disable-zoom', '');
+        mv.setAttribute('auto-rotate', '');
+        mv.setAttribute('shadow-intensity', '1');
+        mv.setAttribute('interaction-prompt', 'none');
+
+        el.appendChild(head);
+        el.appendChild(mv);
 
         el.addEventListener('click', (e) => {
           e.stopPropagation();
           selectedSceneItemId = item.id;
-          hydrateSceneControls();
-          runAction(item);
-          renderScene();
-          renderActions();
+          hydrateControlsFromItem();
+
+          if (currentMode === 'preview') {
+            runAction(item);
+            renderScene();
+            renderActionList();
+          } else {
+            renderScene();
+          }
         });
 
-        overlay.appendChild(el);
+        if (currentMode === 'editor') {
+          head.addEventListener('pointerdown', (e) => startDrag(e, item.id));
+        }
+
+        sceneStage.appendChild(el);
       });
+
+      updateEmptyState();
       updateSelectionInfo();
     }
 
-    function renderActions() {
-      actionSummary.innerHTML = '';
+    function renderActionList() {
+      actionList.innerHTML = '';
+
       if (!sceneItems.length) {
         const empty = document.createElement('div');
         empty.className = 'card';
         empty.innerHTML = '<div class="meta">No scene items yet.</div>';
-        actionSummary.appendChild(empty);
+        actionList.appendChild(empty);
         return;
       }
 
       sceneItems.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card' + (item.id === selectedSceneItemId ? ' active' : '');
+
         let desc = 'No action assigned';
         if (item.action) {
-          if (item.action.type === 'move') {
-            desc = `Tap moves to (${item.action.targetX}%, ${item.action.targetY}%)`;
-          } else if (item.action.type === 'hide') {
-            desc = 'Tap hides this item';
-          } else if (item.action.type === 'show') {
-            desc = 'Tap shows this item';
-          } else if (item.action.type === 'toggle') {
-            desc = 'Tap toggles show/hide';
-          }
+          if (item.action.type === 'move') desc = `Tap moves to (${item.action.targetX}%, ${item.action.targetY}%)`;
+          if (item.action.type === 'hide') desc = 'Tap hides this item';
+          if (item.action.type === 'show') desc = 'Tap shows this item';
+          if (item.action.type === 'toggle') desc = 'Tap toggles visibility';
         }
+
         card.innerHTML = `
           <div class="card-title">${item.label}</div>
           <div class="meta">${desc}</div>
           <div class="small">${item.action?.note || 'No note'}</div>
         `;
-        actionSummary.appendChild(card);
+
+        actionList.appendChild(card);
       });
     }
 
     function updateSelectionInfo() {
-      const item = getSelectedSceneItem();
+      const item = getSelectedItem();
       if (!item) {
         selectedTitle.textContent = 'No item selected';
-        selectedMeta.textContent = 'Select or add a model to begin.';
+        selectedMeta.textContent = 'Select a model, add it into the scene, then edit its settings.';
         return;
       }
+
       const model = models.find(m => m.id === item.modelId);
       const actionText = item.action ? item.action.type : 'none';
       selectedTitle.textContent = item.label;
-      selectedMeta.textContent = `Model: ${model ? model.name : 'Unknown'} | Position: (${item.x}%, ${item.y}%) | Action: ${actionText}`;
-
-      const previewModel = models.find(m => m.id === (item.arModelId || item.modelId));
-      if (previewModel) viewer.src = previewModel.url;
+      selectedMeta.textContent = `Model: ${model ? model.name : 'Unknown'} | Position: (${item.x}%, ${item.y}%) | Size: ${item.width} × ${item.height}px | Action: ${actionText}`;
     }
 
-    function hydrateModelControls() {
-      const model = getSelectedModel();
-      if (!model) return;
-      itemLabel.value = model.name.replace(/\.glb$/i, '');
-    }
-
-    function hydrateSceneControls() {
-      const item = getSelectedSceneItem();
+    function hydrateControlsFromItem() {
+      const item = getSelectedItem();
       if (!item) return;
+
       itemLabel.value = item.label;
       posX.value = item.x;
       posY.value = item.y;
-      sizeInput.value = item.size;
-      arModel.value = item.arModelId || '';
+      itemWidth.value = item.width;
+      itemHeight.value = item.height;
       actionType.value = item.action?.type || 'move';
       targetX.value = item.action?.targetX ?? 75;
       targetY.value = item.action?.targetY ?? 30;
@@ -639,123 +684,123 @@
       updateSelectionInfo();
     }
 
-    function toggleTargetVisibility() {
-      const type = actionType.value;
-      targetPositionRow.style.display = type === 'move' ? 'flex' : 'none';
-    }
-
     function addModelFromFile(file) {
       if (!file.name.toLowerCase().endsWith('.glb')) return;
+
       const model = {
         id: makeId('model'),
         name: file.name,
         size: file.size,
         url: URL.createObjectURL(file)
       };
+
       models.push(model);
-      if (!selectedModelId) selectedModelId = model.id;
+      selectedModelId = model.id;
       renderModels();
-      hydrateModelControls();
-      if (!viewer.src) viewer.src = model.url;
+      itemLabel.value = model.name.replace(/\.glb$/i, '');
     }
 
-    function addSceneItemFromSelectedModel() {
+    function addSelectedModelToScene() {
       const model = getSelectedModel();
       if (!model) {
         alert('Please select a model first.');
         return;
       }
+
       const item = {
         id: makeId('scene'),
         modelId: model.id,
-        arModelId: arModel.value || '',
-        label: itemLabel.value.trim() || model.name,
-        x: Number(posX.value) || 28,
-        y: Number(posY.value) || 55,
-        size: Number(sizeInput.value) || 130,
+        label: itemLabel.value.trim() || model.name.replace(/\.glb$/i, ''),
+        x: clamp(Number(posX.value) || 25, 5, 95),
+        y: clamp(Number(posY.value) || 50, 5, 95),
+        width: clamp(Number(itemWidth.value) || 180, 120, 420),
+        height: clamp(Number(itemHeight.value) || 180, 120, 420),
         hidden: false,
-        original: {
-          x: Number(posX.value) || 28,
-          y: Number(posY.value) || 55,
+        initial: {
+          x: clamp(Number(posX.value) || 25, 5, 95),
+          y: clamp(Number(posY.value) || 50, 5, 95),
           hidden: false
         },
         action: null
       };
+
       sceneItems.push(item);
       selectedSceneItemId = item.id;
       renderScene();
-      renderActions();
-      hydrateSceneControls();
+      renderActionList();
+      hydrateControlsFromItem();
     }
 
     function updateSelectedItem() {
-      const item = getSelectedSceneItem();
+      const item = getSelectedItem();
       if (!item) {
         alert('Please select a scene item first.');
         return;
       }
+
       item.label = itemLabel.value.trim() || item.label;
       item.x = clamp(Number(posX.value) || item.x, 5, 95);
       item.y = clamp(Number(posY.value) || item.y, 5, 95);
-      item.size = clamp(Number(sizeInput.value) || item.size, 60, 260);
-      item.arModelId = arModel.value || '';
-      item.original.x = item.x;
-      item.original.y = item.y;
+      item.width = clamp(Number(itemWidth.value) || item.width, 120, 420);
+      item.height = clamp(Number(itemHeight.value) || item.height, 120, 420);
+      item.initial.x = item.x;
+      item.initial.y = item.y;
       renderScene();
-      renderActions();
-    }
-
-    function clamp(v, min, max) {
-      return Math.max(min, Math.min(max, v));
+      renderActionList();
     }
 
     function assignAction() {
-      const item = getSelectedSceneItem();
+      const item = getSelectedItem();
       if (!item) {
         alert('Please select a scene item first.');
         return;
       }
-      const type = actionType.value;
+
       item.action = {
-        type,
+        type: actionType.value,
         targetX: clamp(Number(targetX.value) || 75, 5, 95),
         targetY: clamp(Number(targetY.value) || 30, 5, 95),
         note: actionNote.value.trim()
       };
-      renderActions();
+
+      renderActionList();
       updateSelectionInfo();
     }
 
     function clearAction() {
-      const item = getSelectedSceneItem();
+      const item = getSelectedItem();
       if (!item) return;
       item.action = null;
-      renderActions();
+      renderActionList();
       updateSelectionInfo();
     }
 
     function runAction(item) {
       if (!item.action) return;
+
       if (item.action.type === 'move') {
         item.x = item.action.targetX;
         item.y = item.action.targetY;
-      } else if (item.action.type === 'hide') {
+      }
+      if (item.action.type === 'hide') {
         item.hidden = true;
-      } else if (item.action.type === 'show') {
+      }
+      if (item.action.type === 'show') {
         item.hidden = false;
-      } else if (item.action.type === 'toggle') {
+      }
+      if (item.action.type === 'toggle') {
         item.hidden = !item.hidden;
       }
     }
 
     function resetSceneState() {
       sceneItems.forEach(item => {
-        item.x = item.original.x;
-        item.y = item.original.y;
-        item.hidden = item.original.hidden;
+        item.x = item.initial.x;
+        item.y = item.initial.y;
+        item.hidden = item.initial.hidden;
       });
       renderScene();
-      renderActions();
+      renderActionList();
     }
 
     function exportScene() {
@@ -764,11 +809,11 @@
         sceneItems: sceneItems.map(item => ({
           id: item.id,
           modelId: item.modelId,
-          arModelId: item.arModelId,
           label: item.label,
           x: item.x,
           y: item.y,
-          size: item.size,
+          width: item.width,
+          height: item.height,
           hidden: item.hidden,
           action: item.action
         }))
@@ -776,66 +821,101 @@
       exportBox.value = JSON.stringify(payload, null, 2);
     }
 
+    function setMode(mode) {
+      currentMode = mode;
+      editorTabBtn.classList.toggle('active', mode === 'editor');
+      previewTabBtn.classList.toggle('active', mode === 'preview');
+      modeHelp.textContent = mode === 'editor'
+        ? 'In Editor mode, drag items to reposition them.'
+        : 'In Preview mode, tap items to test their assigned actions.';
+      renderScene();
+    }
+
+    function startDrag(e, itemId) {
+      if (currentMode !== 'editor') return;
+      const rect = sceneStage.getBoundingClientRect();
+      const item = sceneItems.find(i => i.id === itemId);
+      if (!item) return;
+
+      dragState = {
+        itemId,
+        rect
+      };
+
+      selectedSceneItemId = itemId;
+      hydrateControlsFromItem();
+      renderScene();
+      window.addEventListener('pointermove', onDrag);
+      window.addEventListener('pointerup', stopDrag);
+      e.preventDefault();
+    }
+
+    function onDrag(e) {
+      if (!dragState) return;
+      const item = sceneItems.find(i => i.id === dragState.itemId);
+      if (!item) return;
+
+      const xPct = clamp(((e.clientX - dragState.rect.left) / dragState.rect.width) * 100, 5, 95);
+      const yPct = clamp(((e.clientY - dragState.rect.top) / dragState.rect.height) * 100, 5, 95);
+      item.x = Math.round(xPct);
+      item.y = Math.round(yPct);
+      posX.value = item.x;
+      posY.value = item.y;
+      renderScene();
+    }
+
+    function stopDrag() {
+      if (!dragState) return;
+      const item = sceneItems.find(i => i.id === dragState.itemId);
+      if (item) {
+        item.initial.x = item.x;
+        item.initial.y = item.y;
+      }
+      dragState = null;
+      window.removeEventListener('pointermove', onDrag);
+      window.removeEventListener('pointerup', stopDrag);
+    }
+
     fileInput.addEventListener('change', (e) => {
       Array.from(e.target.files).forEach(addModelFromFile);
     });
 
-    clearModelsBtn.addEventListener('click', () => {
-      models.splice(0, models.length).forEach?.(() => {});
-      while (models.length) models.pop();
-      while (sceneItems.length) sceneItems.pop();
+    clearAllBtn.addEventListener('click', () => {
+      models.forEach(m => {
+        if (m.url && m.url.startsWith('blob:')) URL.revokeObjectURL(m.url);
+      });
+      models.length = 0;
+      sceneItems.length = 0;
       selectedModelId = null;
       selectedSceneItemId = null;
-      modelList.innerHTML = '';
-      overlay.innerHTML = '';
-      actionSummary.innerHTML = '';
-      viewer.src = '';
-      refreshModelDropdown();
-      updateSelectionInfo();
       exportBox.value = '';
-    });
-
-    loadDemoBtn.addEventListener('click', () => {
-      if (models.length) return;
-      const demo = [
-        { name: 'gearbox.glb', size: 180000 },
-        { name: 'shaft.glb', size: 120000 },
-        { name: 'bearing.glb', size: 95000 }
-      ];
-      demo.forEach(d => {
-        models.push({ id: makeId('model'), name: d.name, size: d.size, url: '' });
-      });
-      selectedModelId = models[0].id;
+      itemLabel.value = '';
       renderModels();
-      hydrateModelControls();
-      alert('Demo placeholders added. Upload real GLB files for full preview and AR.');
+      renderScene();
+      renderActionList();
     });
 
-    addToSceneBtn.addEventListener('click', addSceneItemFromSelectedModel);
+    exportBtn.addEventListener('click', exportScene);
+    addToSceneBtn.addEventListener('click', addSelectedModelToScene);
     updateItemBtn.addEventListener('click', updateSelectedItem);
     assignActionBtn.addEventListener('click', assignAction);
     clearActionBtn.addEventListener('click', clearAction);
-    exportBtn.addEventListener('click', exportScene);
     resetSceneBtn.addEventListener('click', resetSceneState);
+    editorTabBtn.addEventListener('click', () => setMode('editor'));
+    previewTabBtn.addEventListener('click', () => setMode('preview'));
     actionType.addEventListener('change', toggleTargetVisibility);
-    launchHintBtn.addEventListener('click', () => {
-      alert('For real-world AR, host this HTML file online using HTTPS, open it on a mobile device, and tap the AR button in the viewer. This first version previews the currently selected model in AR while the left panel manages a multi-model scene plan.');
-    });
 
-    viewerStage.addEventListener('click', (e) => {
-      if (e.target === viewerStage || e.target === overlay) {
+    sceneStage.addEventListener('click', (e) => {
+      if (e.target === sceneStage) {
         selectedSceneItemId = null;
         renderScene();
       }
     });
 
-    posX.value = 28;
-    posY.value = 55;
-    sizeInput.value = 130;
     toggleTargetVisibility();
-    renderActions();
-    refreshModelDropdown();
-    updateSelectionInfo();
+    renderModels();
+    renderScene();
+    renderActionList();
   </script>
 </body>
 </html>
